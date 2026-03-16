@@ -1,0 +1,46 @@
+{
+  "name": "VigiSuivi — Décrochage Scolaire",
+  "short_name": "VigiSuivi",
+  "description": "Suivi du décrochage scolaire — 2nd degré",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "fr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%230d7c66'/%3E%3Ccircle cx='52' cy='156' r='13' fill='rgba(255,255,255,.35)'/%3E%3Ccircle cx='96' cy='118' r='13' fill='rgba(255,255,255,.6)'/%3E%3Ccircle cx='140' cy='74' r='13' fill='white'/%3E%3Cline x1='52' y1='156' x2='96' y2='118' stroke='rgba(255,255,255,.45)' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='96' y1='118' x2='140' y2='74' stroke='rgba(255,255,255,.7)' stroke-width='7' stroke-linecap='round'/%3E%3Ccircle cx='148' cy='162' r='18' fill='%23f97316'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230d7c66'/%3E%3Ccircle cx='138' cy='415' r='35' fill='rgba(255,255,255,.35)'/%3E%3Ccircle cx='256' cy='315' r='35' fill='rgba(255,255,255,.6)'/%3E%3Ccircle cx='374' cy='197' r='35' fill='white'/%3E%3Cline x1='138' y1='415' x2='256' y2='315' stroke='rgba(255,255,255,.45)' stroke-width='18' stroke-linecap='round'/%3E%3Cline x1='256' y1='315' x2='374' y2='197' stroke='rgba(255,255,255,.7)' stroke-width='18' stroke-linecap='round'/%3E%3Ccircle cx='395' cy='432' r='48' fill='%23f97316'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tableau de bord",
+      "url": "./index.html#dash",
+      "description": "Voir le tableau de bord"
+    },
+    {
+      "name": "Alertes",
+      "url": "./index.html#alr",
+      "description": "Voir les alertes critiques"
+    },
+    {
+      "name": "Nouvel élève",
+      "url": "./index.html#add",
+      "description": "Ajouter un élève"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

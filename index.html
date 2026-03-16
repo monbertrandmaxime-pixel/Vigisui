@@ -1,0 +1,2655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VigiSuivi">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Suivi du décrochage scolaire — 2nd degré">
+<title>VigiSuivi</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Crect width='52' height='52' rx='13' fill='%230d7c66'/%3E%3Ccircle cx='14' cy='42' r='3.5' fill='rgba(255,255,255,.35)'/%3E%3Ccircle cx='26' cy='32' r='3.5' fill='rgba(255,255,255,.6)'/%3E%3Ccircle cx='38' cy='20' r='3.5' fill='white'/%3E%3Cline x1='14' y1='42' x2='26' y2='32' stroke='rgba(255,255,255,.45)' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='26' y1='32' x2='38' y2='20' stroke='rgba(255,255,255,.7)' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='38' cy='48' r='5' fill='%23f97316'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* ═══════════════════════════════
+   TOKENS
+═══════════════════════════════ */
+:root {
+  --bg:#f1f5f9; --sur:#fff; --sur2:#f8fafc; --bdr:#e2e8f0; --bdr2:#cbd5e1;
+  --tx:#0f172a; --tx2:#334155; --mu:#64748b; --mu2:#94a3b8;
+  --ac:#0d7c66; --acd:#065f46; --acl:#f0fdf4;
+  --re:#ef4444; --rel:#fef2f2;
+  --or:#f97316; --orl:#fff7ed;
+  --am:#f59e0b; --aml:#fffbeb;
+  --gr:#22c55e; --grl:#f0fdf4;
+  --nv:#0f172a;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.04);
+  --shm:0 8px 24px rgba(0,0,0,.1);
+  --r:12px; --nav:62px; --sb:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);min-height:100vh;line-height:1.5;overflow-x:hidden}
+button,input,select,textarea{font-family:var(--font)}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
+
+/* ═══════════════════════════════
+   LAYOUT
+═══════════════════════════════ */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--nv);padding:max(12px,env(safe-area-inset-top,12px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.tb-brand{display:flex;align-items:center;gap:9px}
+.tb-logo{width:30px;height:30px;flex-shrink:0}
+.tb-name{font-size:17px;font-weight:800;color:#f8fafc;letter-spacing:-.3px}
+.tb-btns{display:flex;gap:7px}
+.tb-btn{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.1);color:white;display:flex;align-items:center;justify-content:center;font-size:15px;border:none;cursor:pointer;transition:background .12s}
+.tb-btn:hover{background:rgba(255,255,255,.18)}
+
+.main-content{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav) + var(--sb) + 8px)}
+.page{padding:16px;max-width:820px;width:100%;margin:0 auto}
+
+/* ═══════════════════════════════
+   BOTTOM NAV
+═══════════════════════════════ */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--nv);border-top:1px solid rgba(255,255,255,.08);z-index:100;padding-bottom:var(--sb);display:flex}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;color:rgba(255,255,255,.38);font-size:10px;font-weight:500;border:none;background:none;cursor:pointer;position:relative;transition:color .1s}
+.bni.on{color:#5eead4}
+.bni-ic{font-size:19px;line-height:1}
+.bni-bdg{position:absolute;top:4px;right:calc(50% - 16px);background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:99px;min-width:14px;text-align:center;display:none}
+
+/* ═══════════════════════════════
+   DRAWER
+═══════════════════════════════ */
+.drw-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(2px)}
+.drw-ov.on{opacity:1;pointer-events:all}
+.drw{position:fixed;top:0;left:0;bottom:0;width:min(82vw,290px);background:var(--nv);z-index:201;transform:translateX(-100%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.drw.on{transform:none}
+.drw-hdr{padding:max(20px,env(safe-area-inset-top,20px)) 16px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+.drw-brand{display:flex;align-items:center;gap:9px}
+.drw-x{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:14px}
+.drw-body{flex:1;overflow-y:auto;padding:8px 12px}
+.drw-sec{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.25);font-weight:700;padding:10px 4px 5px}
+.drw-nb{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:9px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;transition:all .1s;text-align:left;margin-bottom:1px}
+.drw-nb:hover,.drw-nb.on{background:rgba(255,255,255,.09);color:rgba(255,255,255,.85)}
+.drw-nb.on{background:rgba(13,124,102,.3);color:#5eead4}
+.drw-nb-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.drw-nb-bdg{margin-left:auto;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.12)}
+.drw-nb.on .drw-nb-bdg{background:rgba(13,124,102,.4);color:#a7f3d0}
+.drw-nb-bdg.red{background:rgba(239,68,68,.3)!important;color:#fca5a5!important}
+.drw-elv{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;cursor:pointer;transition:background .1s;margin-bottom:1px}
+.drw-elv:hover{background:rgba(255,255,255,.06)}
+.drw-elv.on{background:rgba(255,255,255,.1)}
+.drw-av{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.drw-enm{font-size:12px;font-weight:500;color:rgba(255,255,255,.75);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drw-ecl{font-size:10px;color:rgba(255,255,255,.3)}
+.drw-esc{font-size:11px;font-weight:800;flex-shrink:0}
+.drw-foot{padding:12px;border-top:1px solid rgba(255,255,255,.07)}
+.drw-add{width:100%;padding:10px;background:var(--ac);color:white;border-radius:9px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .12s}
+.drw-add:hover{background:var(--acd)}
+
+/* ═══════════════════════════════
+   BUTTONS & FORMS
+═══════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:9px;font-size:13px;font-weight:600;transition:all .1s;white-space:nowrap;cursor:pointer;border:none}
+.btn-p{background:var(--ac);color:white}
+.btn-p:hover{background:var(--acd)}
+.btn-g{background:var(--sur);color:var(--tx2);border:1.5px solid var(--bdr)}
+.btn-g:hover{background:var(--sur2);border-color:var(--bdr2)}
+.btn-r{background:var(--rel);color:var(--re);border:1.5px solid #fecaca}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:7px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:13px}
+.fg:last-child{margin-bottom:0}
+.fg-row{display:flex;gap:10px}
+.fg-row .fg{flex:1}
+.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu)}
+input,select,textarea{background:var(--sur2);border:1.5px solid var(--bdr);border-radius:9px;padding:9px 11px;color:var(--tx);font-size:13px;outline:none;width:100%;transition:border .1s;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+textarea{resize:vertical;min-height:72px}
+
+/* ═══════════════════════════════
+   MODALS
+═══════════════════════════════ */
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px)}
+.ov.on{opacity:1;pointer-events:all}
+.modal{background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;transform:translateY(14px);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.ov.on .modal{transform:none}
+.mhdl{width:36px;height:4px;background:var(--bdr2);border-radius:99px;margin:10px auto 0;flex-shrink:0}
+.mhdr{padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--sur);z-index:1}
+.mtit{font-size:15px;font-weight:800}
+.msub{font-size:12px;color:var(--mu);margin-top:2px}
+.mx{width:26px;height:26px;border-radius:99px;background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--mu);flex-shrink:0}
+.mbody{padding:16px 18px}
+.mfoot{padding:12px 18px;border-top:1px solid var(--bdr);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--sur);padding-bottom:calc(12px + var(--sb))}
+
+/* ═══════════════════════════════
+   CARDS & UI
+═══════════════════════════════ */
+.card{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:15px;box-shadow:var(--sh);margin-bottom:12px}
+.card-t{font-size:14px;font-weight:700;margin-bottom:11px}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.shdr-t{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.shdr-lk{font-size:12px;color:var(--ac);font-weight:600;cursor:pointer}
+.empty{text-align:center;padding:40px 20px;color:var(--mu)}
+.empty-ic{font-size:32px;margin-bottom:8px}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.tbl{background:var(--acl);color:var(--ac)}
+.tre{background:var(--rel);color:var(--re)}
+.tgr{background:var(--grl);color:#15803d}
+.tam{background:var(--aml);color:#92400e}
+.tor{background:var(--orl);color:#c2410c}
+.tgy{background:var(--sur2);color:var(--mu);border:1px solid var(--bdr)}
+.toast{position:fixed;bottom:calc(var(--nav) + var(--sb) + 10px);left:50%;transform:translateX(-50%) translateY(6px);background:var(--nv);color:#f8fafc;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:var(--shm);z-index:9999;opacity:0;transition:all .22s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toggle{width:44px;height:24px;border-radius:99px;background:var(--bdr2);position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--ac)}
+.toggle-thumb{width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,.2);position:absolute;top:3px;left:3px;transition:left .2s cubic-bezier(.4,0,.2,1)}
+.toggle.on .toggle-thumb{left:23px}
+
+/* ═══════════════════════════════
+   SCORE / RISK
+═══════════════════════════════ */
+.risk{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.r0{background:var(--grl);color:#15803d}
+.r1{background:var(--aml);color:#92400e}
+.r2{background:var(--orl);color:#c2410c}
+.r3{background:var(--rel);color:#b91c1c}
+
+/* ═══════════════════════════════
+   DASHBOARD
+═══════════════════════════════ */
+.hero{background:linear-gradient(135deg,#0f172a 0%,#164e63 55%,#0d7c66 100%);border-radius:var(--r);padding:20px;margin-bottom:16px;color:white;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;bottom:-40px;right:-20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.04)}
+.hero-date{font-size:11px;opacity:.45;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.hero-title{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:12px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.hst{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 11px}
+.hst-v{font-size:21px;font-weight:800;line-height:1;margin-bottom:2px}
+.hst-l{font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.3px}
+.hst.cr .hst-v{color:#fca5a5}
+.hst.el .hst-v{color:#fdba74}
+.hst.mo .hst-v{color:#fde68a}
+.hst.fa .hst-v{color:#86efac}
+
+.ecard{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .12s;box-shadow:var(--sh);margin-bottom:10px}
+.ecard:hover{border-color:var(--ac);box-shadow:var(--shm)}
+.ec-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px}
+.ec-av{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.ec-inf{flex:1;min-width:0}
+.ec-nm{font-size:14px;font-weight:700;margin-bottom:1px}
+.ec-mt{font-size:11.5px;color:var(--mu)}
+.ec-sc{text-align:right}
+.ec-scn{font-size:22px;font-weight:800;line-height:1}
+.ec-scl{font-size:9px;color:var(--mu);text-transform:uppercase}
+.ec-bar{height:4px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-bottom:9px}
+.ec-bf{height:100%;border-radius:99px;transition:width .3s}
+.ec-foot{display:flex;align-items:center;justify-content:space-between}
+.ec-btns{display:flex;gap:5px}
+.ec-btn{width:28px;height:28px;border-radius:7px;background:var(--sur2);border:1.5px solid var(--bdr);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;flex-shrink:0}
+.ec-btn:hover{background:var(--acl);border-color:var(--ac)}
+.ec-la{margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);font-size:11px;color:var(--mu)}
+
+.rdv-item{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:all .1s;box-shadow:var(--sh);margin-bottom:8px}
+.rdv-item:hover{border-color:var(--ac)}
+.rdv-dc{text-align:center;min-width:32px;flex-shrink:0}
+.rdv-dy{font-size:18px;font-weight:800;color:var(--ac);line-height:1}
+.rdv-mo{font-size:9px;text-transform:uppercase;color:var(--mu);letter-spacing:.3px}
+.rdv-sep{width:1px;height:28px;background:var(--bdr);flex-shrink:0}
+.rdv-bd{flex:1;min-width:0}
+.rdv-tt{font-size:13px;font-weight:700;margin-bottom:1px}
+.rdv-mt{font-size:11.5px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;flex-shrink:0}
+.c-up{background:var(--acl);color:var(--ac)}
+.c-ok{background:var(--grl);color:#15803d}
+.c-no{background:var(--rel);color:var(--re)}
+.c-mi{background:var(--rel);color:var(--re)}
+
+/* ═══════════════════════════════
+   FICHE
+═══════════════════════════════ */
+.fhdr{background:var(--sur);border:1.5px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:0;box-shadow:var(--sh)}
+.fhdr-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.fhdr-av{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+.fhdr-inf{flex:1;min-width:0}
+.fhdr-nm{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}
+.fhdr-mt{display:flex;flex-wrap:wrap;gap:4px 11px}
+.fmi{font-size:11.5px;color:var(--mu);display:flex;align-items:center;gap:3px}
+.fmi strong{color:var(--tx2)}
+.fhdr-sc{text-align:center;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:10px 12px;flex-shrink:0;min-width:80px}
+.fsc-n{font-size:28px;font-weight:800;line-height:1}
+.fsc-l{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-top:1px}
+.fsc-t{font-size:11px;font-weight:700;margin-top:2px}
+.ftags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:11px}
+.fbtns{display:flex;gap:6px;flex-wrap:wrap;padding-top:11px;border-top:1px solid var(--bdr)}
+.fbtns .btn{flex:1;justify-content:center;font-size:12px;padding:7px 8px}
+
+/* ═══════════════════════════════
+   SWIPER TABS
+═══════════════════════════════ */
+.sw-bar{background:var(--sur);border:1.5px solid var(--bdr);border-top:none;border-radius:0;display:flex;overflow-x:auto;scrollbar-width:none;position:relative}
+.sw-bar::-webkit-scrollbar{display:none}
+.sw-tab{padding:10px 15px;background:none;border:none;border-bottom:2.5px solid transparent;color:var(--mu);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .1s;flex-shrink:0}
+.sw-tab.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:700}
+.sw-wrap{background:var(--sur);border:1.5px solid var(--bdr);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden}
+.sw-track{display:flex;transition:transform .26s cubic-bezier(.4,0,.2,1)}
+.sw-page{min-width:100%;padding:16px}
+
+/* ═══════════════════════════════
+   TIMELINE
+═══════════════════════════════ */
+.tl{border-left:2px solid var(--bdr);padding-left:13px}
+.tle{position:relative;padding-bottom:12px}
+.tle:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-17px;top:5px;width:8px;height:8px;border-radius:50%;border:2px solid var(--bg)}
+.tl-dt{font-size:11px;color:var(--mu);font-weight:600;margin-bottom:1px}
+.tl-ac{font-size:13px;font-weight:600;margin-bottom:2px}
+.tl-nt{font-size:12px;color:var(--tx2);line-height:1.5}
+
+/* ═══════════════════════════════
+   SCORE HISTORY
+═══════════════════════════════ */
+.sh-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sh-d{font-size:11px;color:var(--mu);width:75px;flex-shrink:0}
+.sh-bg{flex:1;height:6px;background:var(--bdr);border-radius:99px;overflow:hidden}
+.sh-f{height:100%;border-radius:99px}
+.sh-v{font-size:12px;font-weight:800;width:22px;text-align:right;flex-shrink:0}
+.sh-df{font-size:10.5px;font-weight:700;width:28px;text-align:right;flex-shrink:0}
+.sh-n{font-size:11px;color:var(--mu);flex:0 0 110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ═══════════════════════════════
+   IA MODULE
+═══════════════════════════════ */
+.ia-ov{position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:600;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.ia-ov.on{opacity:1;pointer-events:all}
+.ia-pan{background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;transform:translateY(14px);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.ia-ov.on .ia-pan{transform:none}
+.ia-hdl{width:36px;height:4px;background:var(--bdr2);border-radius:99px;margin:10px auto 0}
+.ia-hdr{padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:11px;position:sticky;top:0;background:var(--sur);z-index:1}
+.ia-badge{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--acd));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ia-htit{font-size:15px;font-weight:800;flex:1}
+.ia-x{width:26px;height:26px;border-radius:99px;background:var(--sur2);color:var(--mu);display:flex;align-items:center;justify-content:center;font-size:12px}
+.ia-tabs{display:flex;border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none}
+.ia-tabs::-webkit-scrollbar{display:none}
+.ia-tab{padding:10px 15px;background:none;border:none;border-bottom:2.5px solid transparent;margin-bottom:-1px;color:var(--mu);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .1s}
+.ia-tab.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:700}
+.ia-body{padding:16px 18px}
+.ia-drop{border:2px dashed var(--bdr2);border-radius:11px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .16s;background:var(--sur2);margin-bottom:13px;position:relative;overflow:hidden}
+.ia-drop:hover,.ia-drop.drag{border-color:var(--ac);background:var(--acl)}
+.ia-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ia-drop-ic{font-size:28px;margin-bottom:7px}
+.ia-drop-t{font-size:14px;font-weight:600;margin-bottom:3px}
+.ia-drop-s{font-size:12px;color:var(--mu)}
+.ia-ta{width:100%;min-height:100px;resize:vertical;border:1.5px solid var(--bdr);border-radius:9px;padding:11px;font-size:13px;line-height:1.6;background:var(--sur2);color:var(--tx);outline:none}
+.ia-ta:focus{border-color:var(--ac)}
+.ia-res{background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:13px 15px;margin-top:13px;display:none}
+.ia-res.on{display:block}
+.ia-res-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ac);margin-bottom:9px}
+.ia-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:13px}
+.ia-row:last-child{border-bottom:none}
+.ia-row span:first-child{color:var(--mu);flex-shrink:0;margin-right:8px}
+.ia-row span:last-child{font-weight:600;text-align:right}
+.ia-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--bdr);border-top-color:var(--ac);animation:spin .65s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.vw{width:4px;border-radius:99px;background:#7c3aed;animation:vwave 1s ease infinite}
+.vw:nth-child(1){height:10px;animation-delay:0s}.vw:nth-child(2){height:22px;animation-delay:.1s}.vw:nth-child(3){height:32px;animation-delay:.2s}.vw:nth-child(4){height:22px;animation-delay:.3s}.vw:nth-child(5){height:10px;animation-delay:.4s}
+@keyframes vwave{0%,100%{transform:scaleY(.4);opacity:.5}50%{transform:scaleY(1);opacity:1}}
+@keyframes vpulse{0%,100%{box-shadow:0 4px 24px rgba(239,68,68,.5)}50%{box-shadow:0 4px 36px rgba(239,68,68,.8)}}
+.ia-loading{display:none;align-items:center;gap:10px;padding:18px;justify-content:center;color:var(--mu);font-size:13px}
+.ia-loading.on{display:flex}
+
+/* ═══════════════════════════════
+   PDF PREVIEW
+═══════════════════════════════ */
+#pdfov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:800;display:none;overflow-y:auto;padding:16px}
+#pdfov.on{display:block}
+#pdfwrap{background:white;max-width:794px;margin:0 auto;border-radius:8px;overflow:hidden}
+#pdfbar{background:#0f172a;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:1}
+#pdfbar span{color:rgba(255,255,255,.45);font-size:12px}
+.pdoc{padding:36px 40px;font-family:-apple-system,'Segoe UI',sans-serif;font-size:10.5pt;color:#111;line-height:1.6}
+.ph-band{background:#0f172a;color:white;margin:-36px -40px 20px;padding:20px 40px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ph-tit{font-size:14pt;font-weight:800;margin-bottom:2px}
+.ph-sub{font-size:8.5pt;opacity:.55}
+.ph-conf{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:4px 10px;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:center;flex-shrink:0}
+@media print{body>*{display:none!important}#pprintarea{display:block!important}@page{margin:10mm;size:A4}}
+#pprintarea{display:none}
+
+/* ═══════════════════════════════
+   RESPONSIVE — DESKTOP
+═══════════════════════════════ */
+@media(min-width:900px){
+  .topbar{padding:14px 24px}
+  .bnav{display:none}
+  .main-content{padding-bottom:16px}
+  .page{padding:20px 24px}
+  .ov{align-items:center}
+  .modal{border-radius:16px;max-height:88vh}
+  .mhdl{display:none}
+  .mfoot{padding-bottom:12px}
+  .ia-ov{align-items:center}
+  .ia-pan{border-radius:16px;max-height:88vh}
+  .ia-hdl{display:none}
+  .toast{bottom:18px}
+  .fg-row .fg{margin-bottom:0}
+}
+@media(max-width:899px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .fg-row{flex-direction:column;gap:0}
+  .fg-row .fg{margin-bottom:13px}
+  .pdoc{padding:16px}
+  .ph-band{margin:-16px -16px 16px;padding:14px 16px}
+  #pdfov{padding:0}
+  #pdfwrap{border-radius:0;min-height:100vh}
+}
+@media(hover:none){.ecard:hover{box-shadow:var(--sh)}.btn:hover{transform:none}}
+</style>
+</head>
+<body>
+
+<!-- LOGO SVG réutilisable -->
+<svg style="display:none"><symbol id="logo" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="#0d7c66"/><circle cx="14" cy="42" r="3.5" fill="rgba(255,255,255,.35)"/><circle cx="26" cy="32" r="3.5" fill="rgba(255,255,255,.6)"/><circle cx="38" cy="20" r="3.5" fill="white"/><line x1="14" y1="42" x2="26" y2="32" stroke="rgba(255,255,255,.45)" stroke-width="2" stroke-linecap="round"/><line x1="26" y1="32" x2="38" y2="20" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-linecap="round"/><circle cx="38" cy="48" r="5" fill="#f97316"/><rect x="36.5" y="43.5" width="3" height="2.5" rx=".8" fill="white"/><circle cx="38" cy="48.5" r="1.1" fill="white"/></symbol></svg>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="tb-brand">
+      <svg class="tb-logo" viewBox="0 0 52 52"><use href="#logo"/></svg>
+      <span class="tb-name">VigiSuivi</span>
+    </div>
+    <div class="tb-btns">
+      <button class="tb-btn" onclick="oIA()" title="Assistant IA" style="background:rgba(13,124,102,.35)">🤖</button>
+      <button class="tb-btn" onclick="oAdd()" title="Nouvel élève">＋</button>
+      <button class="tb-btn" onclick="oDrw()" title="Menu">☰</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mc"></main>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bni on" id="bni-dash" onclick="gv('dash')"><span class="bni-ic">📊</span><span>Accueil</span></button>
+  <button class="bni" id="bni-rdv" onclick="gv('rdv')"><span class="bni-ic">📅</span><span>RDV</span><span class="bni-bdg" id="bdg-rdv">0</span></button>
+  <button class="bni" id="bni-alr" onclick="gv('alr')"><span class="bni-ic">🚨</span><span>Alertes</span><span class="bni-bdg" id="bdg-alr">0</span></button>
+  <button class="bni" id="bni-elvs" onclick="gv('elvs')"><span class="bni-ic">👥</span><span>Élèves</span></button>
+  <button class="bni" onclick="oIA()" style="color:#5eead4"><span class="bni-ic">🤖</span><span>IA</span></button>
+</nav>
+
+<!-- DRAWER -->
+<div class="drw-ov" id="drwov" onclick="cDrw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-hdr">
+    <div class="drw-brand">
+      <svg width="28" height="28" viewBox="0 0 52 52"><use href="#logo"/></svg>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#f8fafc">VigiSuivi</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.7px">Décrochage · 2nd degré</div>
+      </div>
+    </div>
+    <button class="drw-x" onclick="cDrw()">✕</button>
+  </div>
+  <div class="drw-body" id="drwbody"></div>
+  <div class="drw-foot">
+    <button class="drw-add" onclick="oAdd();cDrw()">＋ Nouvel élève</button>
+    <div style="display:flex;gap:7px;margin-top:7px">
+      <button onclick="oBak();cDrw()" style="flex:1;padding:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:rgba(255,255,255,.55);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
+        <span id="drw-bak-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+        💾 Sauvegarde
+      </button>
+      <button onclick="oNotif();cDrw()" style="flex:1;padding:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:rgba(255,255,255,.55);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
+        <span id="drw-notif-dot" style="width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block"></span>
+        🔔 Rappels
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ÉLÈVE -->
+<div class="ov" id="ovE" onclick="cov('ovE',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit" id="mtitE">Nouvel élève</div><div class="msub">Fiche individuelle de suivi</div></div>
+    <button class="mx" onclick="cov('ovE')">✕</button>
+  </div>
+  <div class="mbody">
+    <div class="fg-row"><div class="fg"><label class="lbl">Prénom</label><input id="ep" placeholder="Prénom"></div><div class="fg"><label class="lbl">Nom</label><input id="en" placeholder="Nom"></div></div>
+    <div class="fg-row"><div class="fg"><label class="lbl">Classe</label><input id="ecl" placeholder="3ème B"></div><div class="fg"><label class="lbl">Date naissance</label><input id="edd" type="date"></div></div>
+    <div class="fg-row"><div class="fg"><label class="lbl">Référent</label><input id="er" placeholder="Nom"></div><div class="fg"><label class="lbl">Rôle</label><select id="erl"><option>CPE</option><option>Professeur principal</option><option>Directeur</option><option>AED</option><option>Infirmière</option><option>Assistante sociale</option><option>Autre</option></select></div></div>
+    <div class="fg-row"><div class="fg"><label class="lbl">Contact famille</label><input id="ect" placeholder="Tél ou email"></div><div class="fg"><label class="lbl">Prise en charge</label><input id="edt" type="date"></div></div>
+    <div class="fg"><label class="lbl">Fin de prise en charge</label><input id="efin" type="date"></div>
+    <div class="fg"><label class="lbl">Facteurs de risque</label><input id="efac" placeholder="difficultés familiales, isolement…"></div>
+    <div class="fg"><label class="lbl">Contexte initial</label><textarea id="ent" placeholder="Observations…"></textarea></div>
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovE')">Annuler</button><button class="btn btn-p btn-sm" onclick="svE()">Enregistrer</button></div>
+</div></div>
+
+<!-- MODAL ACTION -->
+<div class="ov" id="ovA" onclick="cov('ovA',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit">Nouvelle action</div><div class="msub" id="msubA">—</div></div>
+    <button class="mx" onclick="cov('ovA')">✕</button>
+  </div>
+  <div class="mbody">
+    <div class="fg"><label class="lbl">Type d'action</label><select id="atyp" onchange="updAF()"><option value="tel">📞 Contact téléphonique</option><option value="courrier">✉️ Courrier / mail</option><option value="rdv">📅 Rendez-vous</option><option value="pap">📋 PAP / PAI / PPRE</option><option value="lien">🤝 Création de lien</option><option value="stage">🏢 Stage</option><option value="rased">🧠 Signalement RASED/AS</option><option value="exclusion">⚠️ Exclusion</option><option value="incident">📝 Incident</option><option value="absence">🔴 Absence</option><option value="retard">⏰ Retard</option><option value="autre">💬 Autre</option></select></div>
+    <div id="afields"></div>
+    <div class="fg"><label class="lbl">Date</label><input id="adt" type="date"></div>
+    <div class="fg"><label class="lbl">Détail / observations</label><textarea id="ant" placeholder="Précisions…"></textarea></div>
+    <div class="fg"><label class="lbl">Impact score</label><select id="aimp"><option value="0">Neutre (0)</option><option value="-5">Légère amélioration (−5)</option><option value="-10">Amélioration nette (−10)</option><option value="-15">Forte amélioration (−15)</option><option value="5">Légère dégradation (+5)</option><option value="10">Dégradation (+10)</option><option value="15">Situation critique (+15)</option></select></div>
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovA')">Annuler</button><button class="btn btn-p btn-sm" onclick="svA()">Enregistrer</button></div>
+</div></div>
+
+<!-- MODAL RDV -->
+<div class="ov" id="ovR" onclick="cov('ovR',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit">📅 Planifier un RDV</div><div class="msub" id="msubR">—</div></div>
+    <button class="mx" onclick="cov('ovR')">✕</button>
+  </div>
+  <div class="mbody">
+    <div class="fg"><label class="lbl">Objet</label><input id="robj" placeholder="Point de situation…" oninput="rSMS()"></div>
+    <div class="fg-row"><div class="fg"><label class="lbl">Date</label><input id="rdt" type="date" oninput="rSMS()"></div><div class="fg"><label class="lbl">Heure</label><input id="rhr" type="time" oninput="rSMS()"></div></div>
+    <div class="fg-row"><div class="fg"><label class="lbl">Lieu</label><input id="rlieu" placeholder="Bureau CPE…" oninput="rSMS()"></div><div class="fg"><label class="lbl">Participants</label><input id="rpar" placeholder="Famille, CPE…"></div></div>
+    <div class="fg"><label class="lbl">Notes</label><textarea id="rnt" placeholder="Points à aborder…"></textarea></div>
+    <div style="background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:13px;margin-top:3px">
+      <div style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">💬 SMS — Aperçu</div>
+      <div class="fg"><label class="lbl">Destinataire</label><select id="rdst" onchange="rSMS()"><option value="eleve">L'élève</option><option value="famille">La famille</option></select></div>
+      <div style="background:white;border:1.5px solid var(--bdr);border-radius:8px;padding:9px;font-size:12px;color:var(--tx);white-space:pre-wrap;margin-bottom:8px;font-family:monospace;line-height:1.6" id="smspr">—</div>
+      <div style="display:flex;gap:7px"><button class="btn btn-g btn-sm" style="flex:1;justify-content:center" onclick="cpSMS()">📋 Copier</button><button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="opSMS()">📱 SMS</button></div>
+    </div>
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovR')">Annuler</button><button class="btn btn-p btn-sm" onclick="svR()">Enregistrer</button></div>
+</div></div>
+
+<!-- MODAL IA -->
+<div class="ia-ov" id="ovIA" onclick="cov('ovIA',event)">
+<div class="ia-pan" onclick="event.stopPropagation()">
+  <div class="ia-hdl"></div>
+  <div class="ia-hdr">
+    <div class="ia-badge">🤖</div>
+    <div class="ia-htit">Assistant IA</div>
+    <button class="ia-x" onclick="cov('ovIA')">✕</button>
+  </div>
+  <div class="ia-tabs">
+    <button class="ia-tab on" onclick="iTab(this,0)">📄 Importer</button>
+    <button class="ia-tab" onclick="iTab(this,1)">✍️ Dicter</button>
+    <button class="ia-tab" onclick="iTab(this,2)">🔤 Corriger</button>
+    <button class="ia-tab" onclick="iTab(this,3)">🎙️ Vocal</button>
+  </div>
+
+  <!-- TAB 0 — IMPORT -->
+  <div class="ia-body" id="iat0">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:13px;line-height:1.6">Importez un document <strong>depuis votre appareil</strong> ou collez un <strong>lien partagé</strong> (Adobe, Drive, Dropbox…). L'IA extrait automatiquement les données.</p>
+
+    <!-- MODE SELECTOR -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-p btn-sm" id="imode-file" onclick="iMode('file')" style="flex:1;justify-content:center">📁 Fichier</button>
+      <button class="btn btn-g btn-sm" id="imode-link" onclick="iMode('link')" style="flex:1;justify-content:center">🔗 Lien partagé</button>
+    </div>
+
+    <!-- FICHIER -->
+    <div id="izone-file">
+      <div class="ia-drop" id="idrop" onclick="document.getElementById('ifile').click()">
+        <input type="file" id="ifile" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic" multiple onchange="hdlFile(this)" style="display:none">
+        <div class="ia-drop-ic">📁</div>
+        <div class="ia-drop-t">Appuyez pour sélectionner</div>
+        <div class="ia-drop-s">PDF · JPG · PNG · HEIC — plusieurs fichiers acceptés</div>
+      </div>
+      <!-- PREVIEWS -->
+      <div id="ipreview" style="display:none;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu)" id="ipreview-count">0 fichier(s)</div>
+          <button onclick="clearFiles()" style="font-size:11px;color:var(--re);font-weight:600;background:none;border:none;cursor:pointer">✕ Tout effacer</button>
+        </div>
+        <div id="ipreview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+        <button onclick="document.getElementById('ifile').click()" style="width:100%;margin-top:8px;padding:8px;border:1.5px dashed var(--bdr2);border-radius:9px;background:var(--sur2);color:var(--mu);font-size:12px;font-weight:600;cursor:pointer">＋ Ajouter d'autres fichiers</button>
+      </div>
+    </div>
+
+    <!-- LIEN -->
+    <div id="izone-link" style="display:none">
+      <div class="fg">
+        <label class="lbl">Lien du document partagé</label>
+        <input id="ilink" placeholder="https://acrobat.adobe.com/… ou drive.google.com/…" style="font-size:12px" oninput="detectLink(this.value)">
+      </div>
+      <div id="ilink-detect" style="display:none;font-size:12px;margin-bottom:10px;padding:8px 11px;border-radius:8px;background:var(--acl);color:var(--ac);font-weight:600"></div>
+      <div style="background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:13px">
+        <div style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Services supportés</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span style="font-size:12px;background:var(--rel);color:var(--re);padding:3px 9px;border-radius:99px;font-weight:600">Adobe Acrobat</span>
+          <span style="font-size:12px;background:#e8f0fe;color:#1a73e8;padding:3px 9px;border-radius:99px;font-weight:600">Google Drive</span>
+          <span style="font-size:12px;background:#e8f5e9;color:#2e7d32;padding:3px 9px;border-radius:99px;font-weight:600">Dropbox</span>
+          <span style="font-size:12px;background:#fff3e0;color:#e65100;padding:3px 9px;border-radius:99px;font-weight:600">OneDrive</span>
+          <span style="font-size:12px;background:var(--sur2);color:var(--mu);padding:3px 9px;border-radius:99px;font-weight:600;border:1px solid var(--bdr)">Tout lien public</span>
+        </div>
+        <div style="font-size:11px;color:var(--mu);margin-top:9px;line-height:1.6">⚠️ Le document doit être <strong>accessible publiquement</strong> ou en lecture pour tous.</div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Associer à un élève existant</label><select id="ielv"><option value="">— Créer une nouvelle fiche —</option></select></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="runImport()">🤖 Analyser le document</button>
+    <div class="ia-loading" id="ild0"><div class="ia-spin"></div><span id="ild0-msg">Analyse en cours…</span></div>
+    <div class="ia-res" id="ires0">
+      <div class="ia-res-t">✅ Données extraites</div>
+      <div id="ires0rows"></div>
+      <div style="display:flex;gap:7px;margin-top:13px">
+        <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="applyIA(0)">✅ Créer / Compléter la fiche</button>
+        <button class="btn btn-g btn-sm" onclick="rstIA(0)">↺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1 — DICTER -->
+  <div class="ia-body" id="iat1" style="display:none">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:13px;line-height:1.6">Décrivez librement la situation d'un élève. L'IA génère une fiche complète.</p>
+    <div class="fg"><label class="lbl">Description libre</label><textarea class="ia-ta" id="idct" placeholder="Ex : Lucas Moreau, 15 ans, 3ème A. Absentéisme important, difficultés familiales. Mère contactée le 12/01…" style="min-height:110px"></textarea></div>
+    <div class="fg"><label class="lbl">Associer à un élève existant</label><select id="idctelv"><option value="">— Créer une nouvelle fiche —</option></select></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="runDictate()">🤖 Générer la fiche</button>
+    <div class="ia-loading" id="ild1"><div class="ia-spin"></div>Génération en cours…</div>
+    <div class="ia-res" id="ires1">
+      <div class="ia-res-t">✅ Fiche générée</div>
+      <div id="ires1rows"></div>
+      <div style="display:flex;gap:7px;margin-top:13px">
+        <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="applyIA(1)">✅ Créer / Compléter la fiche</button>
+        <button class="btn btn-g btn-sm" onclick="rstIA(1)">↺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 — CORRIGER -->
+  <div class="ia-body" id="iat2" style="display:none">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:13px;line-height:1.6">Collez un texte — l'IA le corrige et l'améliore pour un usage professionnel.</p>
+    <div class="fg"><label class="lbl">Texte à corriger</label><textarea class="ia-ta" id="ictxt" placeholder="Collez votre texte ici…" style="min-height:110px"></textarea></div>
+    <div class="fg"><label class="lbl">Niveau</label><select id="iclvl"><option value="ortho">Orthographe uniquement</option><option value="style" selected>Orthographe + style professionnel</option><option value="rewrite">Réécriture complète (ton institutionnel)</option></select></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="runCorrect()">🤖 Corriger</button>
+    <div class="ia-loading" id="ild2"><div class="ia-spin"></div>Correction en cours…</div>
+    <div class="ia-res" id="ires2">
+      <div class="ia-res-t">✅ Texte corrigé</div>
+      <div id="ires2out" style="white-space:pre-wrap;font-size:13px;line-height:1.7"></div>
+      <div style="display:flex;gap:7px;margin-top:13px">
+        <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="cpIA()">📋 Copier</button>
+        <button class="btn btn-g btn-sm" onclick="rstIA(2)">↺</button>
+      </div>
+    </div>
+  <!-- TAB 3 — VOCAL 🎙️ -->
+  <div class="ia-body" id="iat3" style="display:none">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:14px;line-height:1.6">
+      Parlez naturellement — l'IA transcrit et reformule en <strong>note professionnelle</strong> avec les actions détectées.
+    </p>
+
+    <!-- ÉLÈVE CIBLE -->
+    <div class="fg" id="voice-elv-wrap">
+      <label class="lbl">Élève concerné</label>
+      <select id="voice-elv"><option value="">— Créer une nouvelle fiche —</option></select>
+    </div>
+
+    <!-- BOUTON ENREGISTREMENT -->
+    <div style="text-align:center;padding:8px 0 16px">
+      <button id="voice-rec-btn" onclick="toggleRecording()" style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;font-size:32px;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4);transition:all .2s;display:inline-flex;align-items:center;justify-content:center">🎙️</button>
+      <div id="voice-status" style="margin-top:11px;font-size:13px;font-weight:600;color:var(--mu)">Appuyez pour parler</div>
+      <!-- Timer -->
+      <div id="voice-timer" style="display:none;font-size:22px;font-weight:800;color:#7c3aed;margin-top:6px;font-variant-numeric:tabular-nums">0:00</div>
+      <!-- Ondes animées -->
+      <div id="voice-waves" style="display:none;justify-content:center;align-items:center;gap:4px;margin-top:10px;height:36px">
+        <div class="vw"></div><div class="vw"></div><div class="vw"></div><div class="vw"></div><div class="vw"></div>
+      </div>
+    </div>
+
+    <!-- TRANSCRIPTION BRUTE -->
+    <div id="voice-raw-wrap" style="display:none">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin-bottom:6px">📝 Transcription</div>
+      <div id="voice-raw" style="background:var(--sur2);border:1.5px solid var(--bdr);border-radius:9px;padding:11px;font-size:13px;line-height:1.7;min-height:60px;color:var(--tx)"></div>
+    </div>
+
+    <!-- ACTIONS IA -->
+    <div id="voice-actions-wrap" style="display:none;margin-top:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="runVoiceAI('note')">🤖 Reformuler en note pro</button>
+        <button class="btn btn-g btn-sm" style="flex:1;justify-content:center" onclick="runVoiceAI('fiche')">👤 Créer fiche élève</button>
+      </div>
+      <button class="btn btn-g btn-sm" style="width:100%;justify-content:center;margin-top:7px" onclick="runVoiceAI('actions')">⚡ Détecter les actions (absences, appels…)</button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="ia-loading" id="ild3"><div class="ia-spin"></div><span id="ild3-msg">Traitement…</span></div>
+
+    <!-- RÉSULTAT -->
+    <div class="ia-res" id="ires3" style="margin-top:12px">
+      <div class="ia-res-t" id="ires3-title">✅ Note reformulée</div>
+      <div id="ires3-content" style="font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+      <!-- Actions détectées -->
+      <div id="ires3-actions" style="display:none;margin-top:11px"></div>
+      <div style="display:flex;gap:7px;margin-top:13px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" id="ires3-apply" style="flex:1;justify-content:center" onclick="applyVoiceResult()">✅ Appliquer</button>
+        <button class="btn btn-g btn-sm" onclick="rstVoice()">↺ Recommencer</button>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+
+<!-- MODAL MODIFIER ACTION -->
+<div class="ov" id="ovEA" onclick="cov('ovEA',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit">✏️ Modifier l'action</div><div class="msub" id="msubEA">—</div></div>
+    <button class="mx" onclick="cov('ovEA')">✕</button>
+  </div>
+  <div class="mbody">
+    <div class="fg"><label class="lbl">Type d'action</label><select id="ea-typ"><option value="tel">📞 Contact téléphonique</option><option value="courrier">✉️ Courrier / mail</option><option value="rdv">📅 Rendez-vous</option><option value="pap">📋 PAP / PAI / PPRE</option><option value="lien">🤝 Création de lien</option><option value="stage">🏢 Stage</option><option value="rased">🧠 Signalement RASED/AS</option><option value="exclusion">⚠️ Exclusion</option><option value="incident">📝 Incident</option><option value="absence">🔴 Absence</option><option value="retard">⏰ Retard</option><option value="autre">💬 Autre</option></select></div>
+    <div class="fg"><label class="lbl">Date</label><input id="ea-dt" type="date"></div>
+    <div class="fg"><label class="lbl">Détail / observations</label><textarea id="ea-nt" style="min-height:80px"></textarea></div>
+    <div class="fg"><label class="lbl">Impact score</label><select id="ea-imp">
+      <option value="0">Neutre (0)</option>
+      <option value="-5">Légère amélioration (−5)</option>
+      <option value="-10">Amélioration nette (−10)</option>
+      <option value="-15">Forte amélioration (−15)</option>
+      <option value="5">Légère dégradation (+5)</option>
+      <option value="10">Dégradation (+10)</option>
+      <option value="15">Situation critique (+15)</option>
+    </select></div>
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovEA')">Annuler</button><button class="btn btn-p btn-sm" onclick="svEditAct()">💾 Enregistrer</button></div>
+</div></div>
+
+<!-- MODAL NOTIFICATIONS -->
+<div class="ov" id="ovNotif" onclick="cov('ovNotif',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit">🔔 Rappels RDV</div><div class="msub">Notifications pour vos rendez-vous</div></div>
+    <button class="mx" onclick="cov('ovNotif')">✕</button>
+  </div>
+  <div class="mbody">
+
+    <!-- STATUT PERMISSION -->
+    <div id="notif-perm-box" style="border-radius:10px;padding:13px;margin-bottom:16px;border:1.5px solid var(--bdr);background:var(--sur2)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="notif-perm-ico" style="font-size:22px">🔔</span>
+        <div style="flex:1">
+          <div id="notif-perm-lbl" style="font-size:13px;font-weight:700">Vérification…</div>
+          <div id="notif-perm-sub" style="font-size:12px;color:var(--mu);margin-top:2px"></div>
+        </div>
+        <button id="notif-perm-btn" class="btn btn-p btn-sm" onclick="requestNotifPerm()" style="display:none">Activer</button>
+      </div>
+    </div>
+
+    <!-- ACTIVER/DÉSACTIVER -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:13px;margin-bottom:13px">
+      <div>
+        <div style="font-size:13px;font-weight:700">Rappels activés</div>
+        <div style="font-size:12px;color:var(--mu);margin-top:2px">Recevoir des notifications pour les RDV</div>
+      </div>
+      <div onclick="toggleNotifs()" style="cursor:pointer;padding:4px">
+        <div class="toggle" id="notif-toggle"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <!-- RAPPELS -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin-bottom:9px">Moments de rappel</div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <label style="display:flex;align-items:center;justify-content:space-between;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:12px 14px;cursor:pointer">
+        <div>
+          <div style="font-size:13px;font-weight:600">🌙 La veille</div>
+          <div style="font-size:12px;color:var(--mu)">Notification à 20h00 la veille du RDV</div>
+        </div>
+        <input type="checkbox" id="notif-j1" style="width:18px;height:18px;accent-color:var(--ac);cursor:pointer" onchange="saveNotifSettings()">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:12px 14px;cursor:pointer">
+        <div>
+          <div style="font-size:13px;font-weight:600">☀️ Le matin du jour J</div>
+          <div style="font-size:12px;color:var(--mu)">Notification à 08h00 le jour du RDV</div>
+        </div>
+        <input type="checkbox" id="notif-j0" style="width:18px;height:18px;accent-color:var(--ac);cursor:pointer" onchange="saveNotifSettings()">
+      </label>
+    </div>
+
+    <!-- RDV À VENIR -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin-bottom:9px">RDV planifiés <span id="notif-rdv-count" style="color:var(--ac)"></span></div>
+    <div id="notif-rdv-list" style="max-height:220px;overflow-y:auto"></div>
+
+    <!-- TEST -->
+    <button class="btn btn-g btn-sm" style="width:100%;justify-content:center;margin-top:13px" onclick="testNotif()">🧪 Envoyer une notification test</button>
+
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovNotif')">Fermer</button></div>
+</div></div>
+
+<!-- MODAL SAUVEGARDE -->
+<div class="ov" id="ovBak" onclick="cov('ovBak',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mhdl"></div>
+  <div class="mhdr">
+    <div><div class="mtit">💾 Sauvegarde des données</div><div class="msub">Chiffrement AES-256 — vos données restent privées</div></div>
+    <button class="mx" onclick="cov('ovBak')">✕</button>
+  </div>
+  <div class="mbody">
+
+    <!-- STATUT -->
+    <div id="bak-status" style="background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:13px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.7px">Dernière sauvegarde</div>
+        <div id="bak-last" style="font-size:12px;font-weight:600;color:var(--ac)">—</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.7px">Élèves sauvegardés</div>
+        <div id="bak-count" style="font-size:12px;font-weight:600">—</div>
+      </div>
+    </div>
+
+    <!-- MOT DE PASSE -->
+    <div class="fg">
+      <label class="lbl">🔑 Mot de passe de chiffrement</label>
+      <input type="password" id="bakpwd" placeholder="Choisissez un mot de passe sécurisé" autocomplete="new-password">
+      <div style="font-size:11px;color:var(--mu);margin-top:4px">⚠️ Notez-le — sans ce mot de passe, la restauration est impossible</div>
+    </div>
+
+    <!-- EXPORT LOCAL -->
+    <div style="background:var(--acl);border:1.5px solid #a7f3d0;border-radius:10px;padding:13px;margin-bottom:11px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">📥 Sauvegarde locale</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">Télécharge un fichier `.vsv` chiffré sur votre appareil</div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="exportBackup()">💾 Télécharger la sauvegarde</button>
+    </div>
+
+    <!-- GOOGLE DRIVE -->
+    <div style="background:#e8f0fe;border:1.5px solid #aecbfa;border-radius:10px;padding:13px;margin-bottom:11px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#1a73e8">☁️ Google Drive</div>
+      <div style="font-size:12px;color:#444;margin-bottom:10px">Sauvegarde automatique vers votre Drive à chaque modification</div>
+      <div id="drive-status" style="font-size:12px;font-weight:600;color:var(--mu);margin-bottom:8px">Non connecté</div>
+      <button class="btn btn-sm" id="drive-btn" onclick="connectDrive()" style="width:100%;justify-content:center;background:#1a73e8;color:white;border:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M6.28 3L1 12.5 6.28 22h11.44L23 12.5 17.72 3zm5.72 14.5L7.08 9h9.84L12 17.5zM8.56 7L12 3.5 15.44 7H8.56z"/></svg>
+        Connecter Google Drive
+      </button>
+    </div>
+
+    <!-- RESTAURER -->
+    <div style="background:var(--sur2);border:1.5px solid var(--bdr);border-radius:10px;padding:13px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">📤 Restaurer une sauvegarde</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:10px">Importe un fichier `.vsv` et restaure toutes les données</div>
+      <input type="file" id="bakfile" accept=".vsv,.json" onchange="importBackup(this)" style="display:none">
+      <button class="btn btn-g" style="width:100%;justify-content:center" onclick="document.getElementById('bakfile').click()">📂 Choisir un fichier de sauvegarde</button>
+      <div id="bak-restore-msg" style="display:none;margin-top:9px;font-size:12px;padding:9px;border-radius:7px"></div>
+    </div>
+
+  </div>
+  <div class="mfoot"><button class="btn btn-g btn-sm" onclick="cov('ovBak')">Fermer</button></div>
+</div></div>
+
+<!-- PDF -->
+<div id="pdfov">
+  <div id="pdfwrap">
+    <div id="pdfbar">
+      <span id="pdfbar-title">📄 Aperçu fiche de suivi</span>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-g btn-sm" style="background:#1e293b;color:white;border-color:#334155" onclick="printDoc()">🖨️ Imprimer</button>
+        <button class="btn btn-g btn-sm" style="background:#d32f2f;color:white;border-color:#b71c1c" onclick="exportPdf()" id="btn-export-pdf">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="flex-shrink:0"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+          Télécharger PDF
+        </button>
+        <button class="btn btn-g btn-sm" style="background:#ff4500;color:white;border-color:#cc3700" onclick="openInAdobe()" id="btn-adobe">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="flex-shrink:0"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-6h2v6zm0-8h-2V7h2v1.5z"/></svg>
+          Ouvrir Adobe
+        </button>
+        <button class="btn btn-g btn-sm" style="background:#1e293b;color:white;border-color:#334155" onclick="closePdf()">✕</button>
+      </div>
+    </div>
+    <div id="pdfc" class="pdoc"></div>
+  </div>
+</div>
+<div id="pprintarea"></div>
+
+<div class="toast" id="tst"><span id="tic"></span><span id="tmsg"></span></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════
+//  DATA
+// ═══════════════════════════════
+const KEY = 'vigisui_v3';
+let db = (() => { try { return JSON.parse(localStorage.getItem(KEY)); } catch(e) { return null; } })();
+const T0 = () => new Date().toISOString().slice(0,10);
+const JR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MO = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const PAL = [['#dbeafe','#1e40af'],['#dcfce7','#166534'],['#fce7f3','#9d174d'],['#ffedd5','#9a3412'],['#ede9fe','#5b21b6'],['#cffafe','#164e63'],['#fef9c3','#854d0e'],['#f0fdf4','#14532d']];
+const AL = {tel:'📞 Contact tél.',courrier:'✉️ Courrier/mail',rdv:'📅 Rendez-vous',pap:'📋 PAP/PAI/PPRE',lien:'🤝 Lien',stage:'🏢 Stage',rased:'🧠 Signalement',exclusion:'⚠️ Exclusion',incident:'📝 Incident',absence:'🔴 Absence',retard:'⏰ Retard',autre:'💬 Autre'};
+const ADC = {tel:'#3b82f6',courrier:'#3b82f6',rdv:'#f59e0b',pap:'#22c55e',lien:'#22c55e',stage:'#22c55e',rased:'#3b82f6',exclusion:'#ef4444',incident:'#f97316',absence:'#ef4444',retard:'#f97316',autre:'#94a3b8'};
+
+if (!db) {
+  const ag = n => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+  db = { nid:10, eleves:[
+    {id:1,prenom:'Lucas',nom:'Moreau',classe:'3ème A',ddn:'2011-04-12',referent:'Mme Dupont',role:'CPE',contact:'06 12 34 56 78',date:ag(45),facteurs:'Difficultés familiales, isolement social',note:'Signalement PP. Hausse absences. Séparation conflictuelle parents.',score:78,sh:[{d:ag(45),v:50,n:'Prise en charge'},{d:ag(20),v:68,n:'Hausse absentéisme'},{d:ag(5),v:78,n:'Incident comportemental'}],actions:[{id:1,t:'tel',d:ag(44),n:'Mère jointe, peu disponible.',imp:0},{id:2,t:'absence',d:ag(35),n:'8 demi-journées non justifiées.',imp:10},{id:3,t:'incident',d:ag(20),n:'Altercation cour.',imp:10},{id:4,t:'rased',d:ag(15),n:'Demande suivi psy.',imp:-5}],rdvs:[{id:1,obj:'Point famille',d:ag(-3),hr:'14:30',par:'Famille, CPE',lieu:'Bureau CPE',nt:'',st:'upcoming',dst:'famille'},{id:2,obj:'Équipe péda.',d:ag(10),hr:'08:00',par:'PP, CPE',lieu:'Salle profs',nt:'Bilan réalisé.',st:'done',dst:'eleve'}]},
+    {id:2,prenom:'Manon',nom:'Girard',classe:'2nde 3',ddn:'2009-09-22',referent:'M. Bernard',role:'Professeur principal',contact:'07 98 76 54 32',date:ag(30),facteurs:'Anxiété scolaire, harcèlement supposé',note:'Signalement infirmière.',score:48,sh:[{d:ag(30),v:65,n:'Prise en charge'},{d:ag(15),v:55,n:'Premier entretien'},{d:ag(5),v:48,n:'PAP validé'}],actions:[{id:1,t:'lien',d:ag(28),n:'Entretien positif.',imp:-5},{id:2,t:'pap',d:ag(12),n:'PAP validé.',imp:-10}],rdvs:[{id:1,obj:'Suivi hebdo',d:ag(-7),hr:'10:00',par:'Manon, M. Bernard',lieu:'Permanence',nt:'',st:'confirme',dst:'eleve'}]},
+    {id:3,prenom:'Noah',nom:'Durand',classe:'1ère ES 1',ddn:'2008-11-05',referent:'Mme Martin',role:'CPE',contact:'non renseigné',date:ag(65),facteurs:'Absentéisme chronique, comportement',note:'55% absences. Famille peu coopérative.',score:91,sh:[{d:ag(65),v:60,n:'Prise en charge'},{d:ag(40),v:75,n:'Dégradation'},{d:ag(10),v:91,n:'Alerte maximale'}],actions:[{id:1,t:'absence',d:ag(60),n:'32 demi-journées.',imp:15},{id:2,t:'courrier',d:ag(48),n:'LRAR envoyé.',imp:0},{id:3,t:'rased',d:ag(20),n:'Dossier transmis AS.',imp:-5},{id:4,t:'stage',d:ag(8),n:'Stage garage 1 semaine.',imp:-10}],rdvs:[{id:1,obj:'Commission éducative',d:ag(-2),hr:'14:00',par:'Direction, CPE, famille',lieu:'Direction',nt:'',st:'refuse',dst:'famille'}]}
+  ]};
+  sv();
+}
+
+function sv() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) { console.warn('Save failed:', e); }
+  if (window._autoBakReady && typeof scheduleAutoBak === 'function') scheduleAutoBak();
+}
+const pal = id => PAL[id % PAL.length];
+const ini = (p,n) => ((p||'')[0]||'').toUpperCase() + ((n||'')[0]||'').toUpperCase();
+const sc = s => s<30?'#22c55e':s<55?'#f59e0b':s<75?'#f97316':'#ef4444';
+const sl = s => s<30?{l:'Faible',c:'r0'}:s<55?{l:'Modéré',c:'r1'}:s<75?{l:'Élevé',c:'r2'}:{l:'Critique',c:'r3'};
+const str = h => !h||h.length<2 ? {d:0} : {d:h[h.length-1].v - h[h.length-2].v};
+
+// ═══════════════════════════════
+//  STATE & NAV
+// ═══════════════════════════════
+let V = 'dash', EID = null, TAB = 0, editId = null, actId = null, rdvId = null;
+let iaDat = [null, null]; // [import data, dictate data]
+
+function gv(v) {
+  V = v; EID = null;
+  snav(v);
+  rDrw();
+  if (v==='dash') rDash();
+  else if (v==='rdv') rRdv();
+  else if (v==='alr') rAlr();
+  else if (v==='elvs') rElvs();
+}
+
+function oF(id) {
+  V = 'fiche'; EID = id; TAB = 0;
+  snav('');
+  rDrw();
+  rFiche(id);
+}
+
+function snav(v) {
+  document.querySelectorAll('.bni').forEach(b => b.classList.remove('on'));
+  const el = document.getElementById('bni-'+v);
+  if (el) el.classList.add('on');
+  // badges
+  const rdvC = db.eleves.reduce((a,e) => a + (e.rdvs||[]).filter(r => r.st==='upcoming' && r.d>=T0()).length, 0);
+  const alrC = db.eleves.filter(e => e.score>=75).length;
+  const br = document.getElementById('bdg-rdv'); if (br) { br.textContent=rdvC; br.style.display=rdvC>0?'block':'none'; }
+  const ba = document.getElementById('bdg-alr'); if (ba) { ba.textContent=alrC; ba.style.display=alrC>0?'block':'none'; }
+}
+
+const mc = () => document.getElementById('mc');
+function render(html) { mc().innerHTML = `<div class="page" style="animation:fadeIn .18s ease">${html}</div>`; }
+
+// ═══════════════════════════════
+//  DRAWER
+// ═══════════════════════════════
+function oDrw() { rDrw(); document.getElementById('drw').classList.add('on'); document.getElementById('drwov').classList.add('on'); document.body.style.overflow='hidden'; }
+function cDrw() { document.getElementById('drw').classList.remove('on'); document.getElementById('drwov').classList.remove('on'); document.body.style.overflow=''; }
+
+function rDrw() {
+  const q = '';
+  const list = [...db.eleves].sort((a,b) => b.score-a.score);
+  const rdvC = db.eleves.reduce((a,e) => a+(e.rdvs||[]).filter(r=>r.st==='upcoming'&&r.d>=T0()).length,0);
+  const alrC = db.eleves.filter(e=>e.score>=75).length;
+  const nb = (ic,lbl,view,bdg,red) => `<button class="drw-nb ${V===view?'on':''}" onclick="gv('${view}');cDrw()"><span class="drw-nb-ic">${ic}</span>${lbl}${bdg>0?`<span class="drw-nb-bdg ${red?'red':''}">${bdg}</span>`:''}</button>`;
+  document.getElementById('drwbody').innerHTML = `
+    <div class="drw-sec">Navigation</div>
+    ${nb('📊','Tableau de bord','dash',0,false)}
+    ${nb('📅','Rendez-vous','rdv',rdvC,false)}
+    ${nb('🚨','Alertes','alr',alrC,true)}
+    ${nb('👥','Tous les élèves','elvs',0,false)}
+    <div class="drw-sec">Élèves suivis (${list.length})</div>
+    ${list.map(e => {
+      const [bg,fg] = pal(e.id);
+      const c = sc(e.score);
+      return `<div class="drw-elv ${EID===e.id?'on':''}" onclick="oF(${e.id});cDrw()">
+        <div class="drw-av" style="background:${bg};color:${fg}">${ini(e.prenom,e.nom)}</div>
+        <div style="flex:1;min-width:0"><div class="drw-enm">${e.prenom} ${e.nom}</div><div class="drw-ecl">${e.classe}</div></div>
+        <div class="drw-esc" style="color:${c}">${e.score}</div>
+      </div>`;
+    }).join('')}`;
+}
+
+// ═══════════════════════════════
+//  OVERLAYS
+// ═══════════════════════════════
+function oov(id) { document.getElementById(id).classList.add('on'); }
+function cov(id, e) { if (e && e.target !== document.getElementById(id)) return; document.getElementById(id).classList.remove('on'); }
+
+// ═══════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════
+function rDash() {
+  const now = new Date();
+  const ds = `${JR[now.getDay()]} ${now.getDate()} ${MO[now.getMonth()]} ${now.getFullYear()}`;
+  const tot = db.eleves.length;
+  const cr = db.eleves.filter(e=>e.score>=75).length;
+  const el = db.eleves.filter(e=>e.score>=55&&e.score<75).length;
+  const mo = db.eleves.filter(e=>e.score>=30&&e.score<55).length;
+  const fa = db.eleves.filter(e=>e.score<30).length;
+  const sm = tot ? Math.round(db.eleves.reduce((a,e)=>a+e.score,0)/tot) : 0;
+  const rdvs = db.eleves.flatMap(e=>(e.rdvs||[]).filter(r=>r.st==='upcoming'&&r.d>=T0()).map(r=>({...r,_e:e}))).sort((a,b)=>a.d>b.d?1:-1);
+  const sorted = [...db.eleves].sort((a,b)=>b.score-a.score);
+
+  render(`
+    <div class="hero">
+      <div class="hero-date">${ds}</div>
+      <div class="hero-title">Bonjour 👋 · ${tot} élève${tot>1?'s':''} · Score moyen ${sm}</div>
+      <div class="hero-stats">
+        <div class="hst cr"><div class="hst-v">${cr}</div><div class="hst-l">Critiques</div></div>
+        <div class="hst el"><div class="hst-v">${el}</div><div class="hst-l">Élevés</div></div>
+        <div class="hst mo"><div class="hst-v">${mo}</div><div class="hst-l">Modérés</div></div>
+        <div class="hst fa"><div class="hst-v">${fa}</div><div class="hst-l">Faibles</div></div>
+      </div>
+    </div>
+
+    <div class="shdr"><div class="shdr-t">Élèves prioritaires</div><span class="shdr-lk" onclick="gv('elvs')">Voir tous →</span></div>
+    ${tot===0 ? `<div class="empty"><div class="empty-ic">👥</div><div>Aucun élève.<br><button class="btn btn-p" style="margin-top:12px" onclick="oAdd()">＋ Ajouter</button></div></div>` :
+      sorted.map(e => eCard(e)).join('')}
+
+    ${rdvs.length ? `<div class="shdr" style="margin-top:8px"><div class="shdr-t">Prochains RDV</div><span class="shdr-lk" onclick="gv('rdv')">Tous →</span></div>${rdvs.slice(0,4).map(r=>rdvItem(r,r._e)).join('')}` : ''}
+  `);
+}
+
+function eCard(e) {
+  const [bg,fg] = pal(e.id);
+  const c = sc(e.score);
+  const {l,c:rc} = sl(e.score);
+  const tr = str(e.sh);
+  const trT = tr.d>0 ? `<span style="color:#ef4444;font-size:11px;font-weight:700">↑+${tr.d}</span>` : tr.d<0 ? `<span style="color:#22c55e;font-size:11px;font-weight:700">↓${tr.d}</span>` : `<span style="color:var(--mu);font-size:11px">→</span>`;
+  const la = (e.actions||[]).slice(-1)[0];
+  return `<div class="ecard" onclick="oF(${e.id})">
+    <div class="ec-top">
+      <div class="ec-av" style="background:${bg};color:${fg}">${ini(e.prenom,e.nom)}</div>
+      <div class="ec-inf"><div class="ec-nm">${e.prenom} ${e.nom}</div><div class="ec-mt">${e.classe} · ${e.referent}</div></div>
+      <div class="ec-sc"><div class="ec-scn" style="color:${c}">${e.score}</div><div class="ec-scl">/100</div></div>
+    </div>
+    <div class="ec-bar"><div class="ec-bf" style="width:${e.score}%;background:${c}"></div></div>
+    <div class="ec-foot">
+      <span class="risk ${rc}">⬤ ${l}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${trT}
+        <div class="ec-btns" onclick="event.stopPropagation()">
+          <div class="ec-btn" onclick="oAct(${e.id})" title="Action">⚡</div>
+          <div class="ec-btn" onclick="oRdv(${e.id})" title="RDV">📅</div>
+          <div class="ec-btn" onclick="oPdf(${e.id})" title="PDF">📄</div>
+        </div>
+      </div>
+    </div>
+    ${la ? `<div class="ec-la">${AL[la.t]||la.t} · ${la.d}</div>` : ''}
+  </div>`;
+}
+
+function rdvItem(r, e) {
+  const dd = new Date(r.d);
+  const stM = {upcoming:'c-up',confirme:'c-ok',done:'c-ok',refuse:'c-no',missed:'c-mi'};
+  const stL = {upcoming:'À venir',confirme:'✅ Confirmé',done:'Réalisé',refuse:'❌ Refusé',missed:'Manqué'};
+  return `<div class="rdv-item" onclick="${e?`oF(${e.id})`:''}" >
+    <div class="rdv-dc"><div class="rdv-dy">${dd.getDate()}</div><div class="rdv-mo">${dd.toLocaleString('fr',{month:'short'})}</div></div>
+    <div class="rdv-sep"></div>
+    <div class="rdv-bd"><div class="rdv-tt">${r.obj}</div><div class="rdv-mt">${e?e.prenom+' '+e.nom+' · ':''} ${r.hr||''} ${r.lieu?'· '+r.lieu:''}</div></div>
+    <span class="chip ${stM[r.st]||'c-up'}">${stL[r.st]||'À venir'}</span>
+  </div>`;
+}
+
+// ═══════════════════════════════
+//  ÉLÈVES
+// ═══════════════════════════════
+function rElvs() {
+  const list = [...db.eleves].sort((a,b)=>b.score-a.score);
+  render(`<div class="shdr"><div class="shdr-t">Tous les élèves</div><button class="btn btn-p btn-sm" onclick="oAdd()">＋</button></div>${list.length===0?`<div class="empty"><div class="empty-ic">👥</div><div>Aucun élève.</div></div>`:list.map(e=>eCard(e)).join('')}`);
+}
+
+// ═══════════════════════════════
+//  ALERTES
+// ═══════════════════════════════
+function rAlr() {
+  const list = [...db.eleves].filter(e=>e.score>=55).sort((a,b)=>b.score-a.score);
+  render(`<div class="shdr"><div class="shdr-t">🚨 Alertes</div></div>${list.length===0?`<div class="empty"><div class="empty-ic">✅</div><div>Aucune alerte active</div></div>`:list.map(e=>{
+    const [bg,fg]=pal(e.id); const c=sc(e.score); const {l,c:rc}=sl(e.score);
+    return `<div class="ecard" onclick="oF(${e.id})" style="border-left:3px solid ${c}">
+      <div class="ec-top"><div class="ec-av" style="background:${bg};color:${fg}">${ini(e.prenom,e.nom)}</div><div class="ec-inf"><div class="ec-nm">${e.prenom} ${e.nom}</div><div class="ec-mt">${e.classe} · ${e.facteurs||'—'}</div></div><div class="ec-sc"><div class="ec-scn" style="color:${c}">${e.score}</div><div class="ec-scl">/100</div></div></div>
+      <div class="ec-bar"><div class="ec-bf" style="width:${e.score}%;background:${c}"></div></div>
+      <div class="ec-foot"><span class="risk ${rc}">⬤ ${l}</span></div>
+    </div>`;
+  }).join('')}`);
+}
+
+// ═══════════════════════════════
+//  RDV GLOBAL
+// ═══════════════════════════════
+function rRdv() {
+  const all = db.eleves.flatMap(e=>(e.rdvs||[]).map(r=>({...r,_e:e})));
+  const up = all.filter(r=>r.st==='upcoming'&&r.d>=T0()).sort((a,b)=>a.d>b.d?1:-1);
+  const past = all.filter(r=>r.st!=='upcoming'||r.d<T0()).sort((a,b)=>b.d>a.d?1:-1).slice(0,10);
+  render(`
+    ${up.length?`<div class="shdr"><div class="shdr-t">À venir (${up.length})</div></div>${up.map(r=>rdvItem(r,r._e)).join('')}`:''}
+    ${past.length?`<div class="shdr" style="margin-top:8px"><div class="shdr-t">Passés</div></div>${past.map(r=>rdvItem(r,r._e)).join('')}`:''}
+    ${all.length===0?`<div class="empty"><div class="empty-ic">📅</div><div>Aucun rendez-vous.</div></div>`:''}
+  `);
+}
+
+// ═══════════════════════════════
+//  FICHE ÉLÈVE
+// ═══════════════════════════════
+const TABS = [{l:'📋 Fiche'},{l:'⚡ Actions'},{l:'📉 Absences'},{l:'📈 Score'},{l:'📅 RDV'}];
+
+function rFiche(id) {
+  const e = db.eleves.find(el=>el.id===id);
+  if (!e) { gv('dash'); return; }
+  const [bg,fg] = pal(e.id);
+  const c = sc(e.score);
+  const {l,c:rc} = sl(e.score);
+  const tr = str(e.sh);
+  const trT = tr.d>0 ? `<span style="color:#ef4444">↑+${tr.d}</span>` : tr.d<0 ? `<span style="color:#22c55e">↓${tr.d}</span>` : `<span style="color:var(--mu)">→</span>`;
+  const pages = [tFiche(e), tActions(e), tAbs(e), tScore(e), tRdvs(e)];
+
+  render(`
+    <div class="fhdr" style="border-radius:var(--r) var(--r) 0 0;border-bottom:none">
+      <div class="fhdr-top">
+        <div class="fhdr-av" style="background:${bg};color:${fg}">${ini(e.prenom,e.nom)}</div>
+        <div class="fhdr-inf">
+          <div class="fhdr-nm">${e.prenom} ${e.nom}</div>
+          <div class="fhdr-mt">
+            <div class="fmi">🏫 <strong>${e.classe}</strong></div>
+            <div class="fmi">📞 <strong>${e.contact||'—'}</strong></div>
+            <div class="fmi">👤 <strong>${e.referent}</strong> · ${e.role}</div>
+          </div>
+        </div>
+        <div class="fhdr-sc"><div class="fsc-n" style="color:${c}">${e.score}</div><div class="fsc-l">Score</div><div class="fsc-t">${trT}</div></div>
+      </div>
+      <div class="ftags"><span class="risk ${rc}">⬤ ${l}</span>${e.facteurs?`<span class="tag tam">⚠️ ${e.facteurs}</span>`:''}</div>
+      <div class="fbtns">
+        <button class="btn btn-g btn-sm" onclick="oEdit(${e.id})">✏️</button>
+        <button class="btn btn-p btn-sm" onclick="oAct(${e.id})">⚡ Action</button>
+        <button class="btn btn-g btn-sm" onclick="oRdv(${e.id})">📅 RDV</button>
+        <button class="btn btn-g btn-sm" style="background:#7c3aed;color:white;border-color:#7c3aed" onclick="oVoice(${e.id})">🎙️ Vocal</button>
+        <button class="btn btn-g btn-sm" onclick="oPdf(${e.id})">📄</button>
+        <button class="btn btn-r btn-sm" onclick="delE(${e.id})">🗑️</button>
+      </div>
+    </div>
+    <div style="background:var(--sur);border:1.5px solid var(--bdr);border-top:none;display:flex;overflow-x:auto;scrollbar-width:none" id="sw-bar">
+      ${TABS.map((t,i)=>`<button class="sw-tab ${i===TAB?'on':''}" onclick="goTab(${i},${e.id})">${t.l}</button>`).join('')}
+    </div>
+    <div class="sw-wrap"><div class="sw-track" id="sw-track" style="transform:translateX(-${TAB*100}%)">
+      ${pages.map(p=>`<div class="sw-page">${p}</div>`).join('')}
+    </div></div>
+  `);
+  initSwipe(e.id);
+}
+
+let swX = 0, swDrg = false;
+function initSwipe(id) {
+  const wrap = document.querySelector('.sw-wrap');
+  if (!wrap) return;
+  wrap.addEventListener('touchstart', e => { swX = e.touches[0].clientX; swDrg = true; }, {passive:true});
+  wrap.addEventListener('touchend', e => {
+    if (!swDrg) return; swDrg = false;
+    const dx = e.changedTouches[0].clientX - swX;
+    if (Math.abs(dx) > 50) { if (dx<0 && TAB<TABS.length-1) goTab(TAB+1,id); else if (dx>0 && TAB>0) goTab(TAB-1,id); }
+  }, {passive:true});
+}
+
+function goTab(i, id) {
+  TAB = i;
+  const tr = document.getElementById('sw-track');
+  if (tr) tr.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.sw-tab').forEach((b,j) => b.classList.toggle('on', j===i));
+  const btn = document.querySelectorAll('.sw-tab')[i];
+  if (btn) btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+
+function tFiche(e) {
+  return `<div class="card"><div class="card-t">📄 Informations</div>${[
+    ['Classe',e.classe],['Naissance',e.ddn||'—'],['Référent',`${e.referent} (${e.role})`],
+    ['Contact',e.contact||'—'],['Prise en charge',e.date||'—'],['Fin de prise en charge',e.fin||'—'],['Facteurs',e.facteurs||'—']
+  ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px"><span style="color:var(--mu)">${l}</span><span style="font-weight:500;text-align:right;max-width:60%">${v}</span></div>`).join('')}</div>
+  <div class="card"><div class="card-t">📝 Contexte</div><div style="font-size:13px;line-height:1.7">${e.note||'<span style="color:var(--mu)">Aucune note.</span>'}</div></div>`;
+}
+
+function tActions(e) {
+  const acts = [...(e.actions||[])].reverse();
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px"><div style="font-size:14px;font-weight:800">Journal des actions</div><button class="btn btn-p btn-sm" onclick="oAct(${e.id})">＋</button></div>
+  ${acts.length===0
+    ? `<div class="empty"><div class="empty-ic">⚡</div><div>Aucune action.</div></div>`
+    : `<div class="card"><div class="tl">${acts.map(a=>{
+        const dot = ADC[a.t]||'#888';
+        const imp = a.imp>0
+          ? `<span class="tag tre" style="margin-top:3px;font-size:10px">↑+${a.imp}</span>`
+          : a.imp<0 ? `<span class="tag tgr" style="margin-top:3px;font-size:10px">↓${a.imp}</span>` : '';
+        return `<div class="tle">
+          <div class="tl-dot" style="background:${dot}"></div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="flex:1">
+              <div class="tl-dt">${a.d}</div>
+              <div class="tl-ac">${AL[a.t]||a.t}</div>
+              ${a.n?`<div class="tl-nt">${a.n}</div>`:''}
+              ${imp}
+            </div>
+            <div style="display:flex;gap:5px;flex-shrink:0;margin-top:2px">
+              <button class="ec-btn" onclick="oEditAct(${e.id},${a.id})" title="Modifier" style="width:26px;height:26px;font-size:11px">✏️</button>
+              <button class="ec-btn" onclick="delAct(${e.id},${a.id})" title="Supprimer" style="width:26px;height:26px;font-size:11px;color:var(--re)">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div></div>`
+  }`;
+}
+
+function tAbs(e) {
+  const aa = (e.actions||[]).filter(a=>['absence','retard','exclusion'].includes(a.t));
+  const nb = t => (e.actions||[]).filter(a=>a.t===t).length;
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+    <div class="card" style="text-align:center;margin-bottom:0"><div style="font-size:22px;font-weight:800;color:var(--re)">${nb('absence')}</div><div style="font-size:11px;color:var(--mu)">Absences</div></div>
+    <div class="card" style="text-align:center;margin-bottom:0"><div style="font-size:22px;font-weight:800;color:var(--or)">${nb('retard')}</div><div style="font-size:11px;color:var(--mu)">Retards</div></div>
+    <div class="card" style="text-align:center;margin-bottom:0"><div style="font-size:22px;font-weight:800;color:var(--am)">${nb('exclusion')}</div><div style="font-size:11px;color:var(--mu)">Exclusions</div></div>
+  </div>
+  ${aa.length===0?`<div class="empty"><div class="empty-ic">✅</div><div>Aucune absence.</div></div>`:`<div class="card" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>${['Type','Date','Détail','±'].map(h=>`<th style="text-align:left;padding:7px 9px;border-bottom:2px solid var(--bdr);font-size:10px;text-transform:uppercase;color:var(--mu)">${h}</th>`).join('')}</tr></thead><tbody>${[...aa].reverse().map(a=>`<tr style="border-bottom:1px solid var(--bdr)"><td style="padding:7px 9px">${AL[a.t]||a.t}</td><td style="padding:7px 9px">${a.d}</td><td style="padding:7px 9px;color:var(--mu);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.n||'—'}</td><td style="padding:7px 9px;font-weight:700;color:${a.imp>0?'var(--re)':a.imp<0?'var(--gr)':'var(--mu)'}">${a.imp>0?'+'+a.imp:a.imp||'—'}</td></tr>`).join('')}</tbody></table></div>`}`;
+}
+
+function tScore(e) {
+  const h = e.sh||[];
+  return `<div class="card"><div style="display:flex;align-items:flex-start;justify-content:space-between"><div><div style="font-size:11px;color:var(--mu);margin-bottom:3px">Score actuel</div><div style="font-size:42px;font-weight:800;line-height:1;color:${sc(e.score)}">${e.score}</div><span class="risk ${sl(e.score).c}" style="margin-top:8px;display:inline-flex">⬤ ${sl(e.score).l}</span></div><div style="font-size:11px;color:var(--mu);text-align:right;line-height:1.7"><div>0 = aucun risque</div><div>100 = décrochage total</div></div></div></div>
+  <div class="card"><div class="card-t">📈 Historique</div>${h.length===0?`<div class="empty" style="padding:16px"><div>Pas de données.</div></div>`:h.map((pt,i)=>{const prev=i>0?h[i-1].v:pt.v;const diff=pt.v-prev;return`<div class="sh-row"><div class="sh-d">${pt.d}</div><div class="sh-bg"><div class="sh-f" style="width:${pt.v}%;background:${sc(pt.v)}"></div></div><div class="sh-v" style="color:${sc(pt.v)}">${pt.v}</div><div class="sh-df" style="color:${diff>0?'#ef4444':diff<0?'#22c55e':'var(--mu)'}">${i===0?'—':diff>0?'+'+diff:String(diff)}</div><div class="sh-n">${pt.n||''}</div></div>`;}).join('')}</div>`;
+}
+
+function tRdvs(e) {
+  const rdvs = [...(e.rdvs||[])].sort((a,b)=>a.d>b.d?1:-1);
+  const stM = {upcoming:'c-up',confirme:'c-ok',done:'c-ok',refuse:'c-no',missed:'c-mi'};
+  const stL = {upcoming:'À venir',confirme:'✅ Confirmé',done:'Réalisé',refuse:'❌ Refusé',missed:'Manqué'};
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px"><div style="font-size:14px;font-weight:800">Rendez-vous</div><button class="btn btn-p btn-sm" onclick="oRdv(${e.id})">＋</button></div>
+  ${rdvs.length===0?`<div class="empty"><div class="empty-ic">📅</div><div>Aucun.</div></div>`:rdvs.map(r=>{const dd=new Date(r.d);const bc=r.st==='upcoming'?'var(--ac)':r.st==='confirme'||r.st==='done'?'var(--gr)':'var(--re)';return`<div style="background:var(--sur2);border-radius:10px;padding:11px;margin-bottom:8px;border-left:3px solid ${bc}"><div style="display:flex;gap:10px;align-items:flex-start"><div style="text-align:center;min-width:28px"><div style="font-size:16px;font-weight:800;color:var(--ac);line-height:1">${dd.getDate()}</div><div style="font-size:9px;text-transform:uppercase;color:var(--mu)">${dd.toLocaleString('fr',{month:'short'})}</div></div><div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:2px">${r.obj}</div><div style="font-size:11.5px;color:var(--mu)">${[r.hr,r.lieu,r.par].filter(Boolean).join(' · ')}</div>${r.nt?`<div style="font-size:11px;color:var(--mu);margin-top:2px;font-style:italic">${r.nt}</div>`:''}<div style="margin-top:6px;display:flex;align-items:center;gap:7px"><span class="chip ${stM[r.st]||'c-up'}">${stL[r.st]||r.st}</span>${r.st==='upcoming'?`<button class="btn btn-g btn-xs" onclick="mkRdv(${e.id},${r.id},'done')">✓ Réalisé</button>`:''}</div></div></div></div>`;}).join('')}`;
+}
+
+function mkRdv(eid,rid,st) {
+  const e = db.eleves.find(el=>el.id===eid); if(!e) return;
+  const r = (e.rdvs||[]).find(rv=>rv.id===rid); if(r) { r.st=st; sv(); rFiche(eid); toast('📅','RDV mis à jour'); }
+}
+
+// ═══════════════════════════════
+//  MODALS
+// ═══════════════════════════════
+function oAdd() { oEdit(null); }
+function oEdit(id) {
+  editId = id;
+  document.getElementById('mtitE').textContent = id ? 'Modifier l\'élève' : 'Nouvel élève';
+  const e = id ? db.eleves.find(el=>el.id===id) : null;
+  ['ep','en','ecl','edd','er','ect','efac','ent'].forEach((f,i)=>{
+    const k=['prenom','nom','classe','ddn','referent','contact','facteurs','note'][i];
+    const el=document.getElementById(f); if(el) el.value=e?.[k]||'';
+  });
+  document.getElementById('erl').value = e?.role||'CPE';
+  document.getElementById('edt').value = e?.date||T0();
+  document.getElementById('efin').value = e?.fin||'';
+  oov('ovE');
+}
+
+function svE() {
+  const p = document.getElementById('ep').value.trim();
+  const n = document.getElementById('en').value.trim();
+  if (!p||!n) { toast('⚠️','Prénom et nom requis'); return; }
+  if (editId) {
+    const e = db.eleves.find(el=>el.id===editId);
+    if (e) Object.assign(e,{prenom:p,nom:n,classe:document.getElementById('ecl').value.trim(),ddn:document.getElementById('edd').value,referent:document.getElementById('er').value.trim(),role:document.getElementById('erl').value,contact:document.getElementById('ect').value.trim(),date:document.getElementById('edt').value,fin:document.getElementById('efin').value,facteurs:document.getElementById('efac').value.trim(),note:document.getElementById('ent').value.trim()});
+    toast('✅',`${p} ${n} mis à jour`);
+  } else {
+    const nid = db.nid++;
+    db.eleves.push({id:nid,prenom:p,nom:n,classe:document.getElementById('ecl').value.trim(),ddn:document.getElementById('edd').value,referent:document.getElementById('er').value.trim(),role:document.getElementById('erl').value,contact:document.getElementById('ect').value.trim(),date:document.getElementById('edt').value||T0(),fin:document.getElementById('efin').value,facteurs:document.getElementById('efac').value.trim(),note:document.getElementById('ent').value.trim(),score:30,sh:[{d:T0(),v:30,n:'Prise en charge'}],actions:[],rdvs:[]});
+    toast('✅',`${p} ${n} ajouté(e)`);
+  }
+  sv(); cov('ovE'); rDrw(); snav(V);
+  if (editId && V==='fiche') rFiche(editId); else if (V==='dash') rDash(); else if (V==='elvs') rElvs();
+}
+
+function delE(id) {
+  const e = db.eleves.find(el=>el.id===id); if(!e) return;
+  if (!confirm(`Supprimer ${e.prenom} ${e.nom} définitivement ?`)) return;
+  db.eleves = db.eleves.filter(el=>el.id!==id);
+  sv(); rDrw(); snav('dash'); gv('dash');
+  toast('🗑️','Élève supprimé');
+}
+
+// ── Modifier une action ──
+let editActEid = null, editActId = null;
+
+function oEditAct(eid, aid) {
+  const e = db.eleves.find(el=>el.id===eid); if(!e) return;
+  const a = (e.actions||[]).find(ac=>ac.id===aid); if(!a) return;
+  editActEid = eid; editActId = aid;
+  document.getElementById('msubEA').textContent = `${e.prenom} ${e.nom} · ${e.classe}`;
+  document.getElementById('ea-typ').value = a.t||'autre';
+  document.getElementById('ea-dt').value = a.d||T0();
+  document.getElementById('ea-nt').value = a.n||'';
+  document.getElementById('ea-imp').value = String(a.imp||0);
+  oov('ovEA');
+}
+
+function svEditAct() {
+  const e = db.eleves.find(el=>el.id===editActEid); if(!e) return;
+  const a = (e.actions||[]).find(ac=>ac.id===editActId); if(!a) return;
+  // Recalculer le score : annuler l'ancien impact, appliquer le nouveau
+  const oldImp = a.imp||0;
+  const newImp = parseInt(document.getElementById('ea-imp').value)||0;
+  a.t = document.getElementById('ea-typ').value;
+  a.d = document.getElementById('ea-dt').value;
+  a.n = document.getElementById('ea-nt').value.trim();
+  a.imp = newImp;
+  // Ajuster le score si l'impact a changé
+  if (oldImp !== newImp) {
+    e.score = Math.max(0, Math.min(100, e.score - oldImp + newImp));
+  }
+  sv(); cov('ovEA'); rFiche(editActEid);
+  toast('✅', 'Action modifiée');
+}
+
+function delAct(eid, aid) {
+  const e = db.eleves.find(el=>el.id===eid); if(!e) return;
+  const a = (e.actions||[]).find(ac=>ac.id===aid); if(!a) return;
+  if (!confirm(`Supprimer cette action ?\n${AL[a.t]||a.t} · ${a.d}`)) return;
+  // Annuler l'impact sur le score
+  if (a.imp) e.score = Math.max(0, Math.min(100, e.score - a.imp));
+  e.actions = e.actions.filter(ac=>ac.id!==aid);
+  sv(); rFiche(eid);
+  toast('🗑️', 'Action supprimée');
+}
+
+function updAF() {
+  const f = document.getElementById('afields');
+  if (t==='absence') f.innerHTML=`<div class="fg-row"><div class="fg"><label class="lbl">Demi-journées</label><input id="adj" type="number" min="1" placeholder="4"></div><div class="fg"><label class="lbl">Justifiée</label><select id="ajst"><option value="non">Non</option><option value="oui">Oui</option><option value="partiel">Partielle</option></select></div></div>`;
+  else if (t==='stage') f.innerHTML=`<div class="fg"><label class="lbl">Structure d'accueil</label><input id="alieu" placeholder="Garage Dupont…"></div><div class="fg"><label class="lbl">Durée</label><input id="adur" placeholder="1 semaine"></div>`;
+  else if (t==='pap') f.innerHTML=`<div class="fg"><label class="lbl">Dispositif</label><select id="apap"><option>PAP</option><option>PAI</option><option>PPRE</option><option>PPS</option></select></div>`;
+  else f.innerHTML='';
+}
+
+function oAct(id) {
+  actId = id;
+  const e = db.eleves.find(el=>el.id===id);
+  document.getElementById('msubA').textContent = e ? `${e.prenom} ${e.nom} · ${e.classe}` : '—';
+  document.getElementById('adt').value = T0();
+  document.getElementById('ant').value = '';
+  document.getElementById('atyp').value = 'tel';
+  document.getElementById('aimp').value = '0';
+  updAF();
+  oov('ovA');
+}
+
+function svA() {
+  const e = db.eleves.find(el=>el.id===actId); if(!e) return;
+  const t = document.getElementById('atyp').value;
+  const d = document.getElementById('adt').value;
+  const n = document.getElementById('ant').value.trim();
+  const imp = parseInt(document.getElementById('aimp').value)||0;
+  let ex = '';
+  if (t==='absence') { const dj=document.getElementById('adj')?.value; const jst=document.getElementById('ajst')?.value; ex=`${dj?dj+' demi-journées ':''}${jst?'· '+jst:''}`; }
+  else if (t==='stage') { const l=document.getElementById('alieu')?.value; const du=document.getElementById('adur')?.value; ex=`${l||''}${du?' · '+du:''}`; }
+  else if (t==='pap') { ex=document.getElementById('apap')?.value||''; }
+  (e.actions=e.actions||[]).push({id:Date.now(),t,d,n:(ex?ex+' — ':'')+n,imp});
+  const ns = Math.max(0,Math.min(100,e.score+imp));
+  e.score = ns;
+  if (imp!==0) (e.sh=e.sh||[]).push({d,v:ns,n:(AL[t]||t).replace(/[📞✉️📅📋🤝🏢🧠⚠️📝🔴⏰💬]/g,'').trim()});
+  sv(); cov('ovA'); snav(V);
+  if (V==='fiche') rFiche(actId);
+  toast('✅','Action enregistrée');
+}
+
+// RDV
+function bSMS() {
+  const e = db.eleves.find(el=>el.id===rdvId);
+  const obj = document.getElementById('robj')?.value||'rendez-vous';
+  const d = document.getElementById('rdt')?.value||'';
+  const hr = document.getElementById('rhr')?.value||'';
+  const lieu = document.getElementById('rlieu')?.value||'';
+  const dst = document.getElementById('rdst')?.value||'eleve';
+  const ds = d ? new Date(d).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) : '[date]';
+  const intro = dst==='famille' ? `Bonjour,\nNous vous contactons au sujet de ${e?.prenom||'votre enfant'}.` : `Bonjour ${e?.prenom||''},`;
+  return `${intro}\n\nRendez-vous : ${obj}.\n📅 Le ${ds}\n⏰ À ${hr||'[heure]'}\n📍 ${lieu||'[lieu]'}\n\nMerci de confirmer.\n${e?.referent||'Établissement'}`;
+}
+function rSMS() { const el=document.getElementById('smspr'); if(el) el.textContent=bSMS(); }
+function cpSMS() { navigator.clipboard?.writeText(bSMS()).catch(()=>{}); toast('📋','SMS copié !'); }
+function opSMS() { const e=db.eleves.find(el=>el.id===rdvId); const ph=(e?.contact||'').replace(/\s/g,''); window.location.href=(`sms:${/^(06|07|\+33[67])/.test(ph)?ph:''}?body=`)+encodeURIComponent(bSMS()); }
+
+function oRdv(id) {
+  rdvId = id;
+  const e = db.eleves.find(el=>el.id===id);
+  document.getElementById('msubR').textContent = e ? `${e.prenom} ${e.nom} · ${e.classe}` : '—';
+  ['robj','rdt','rhr','rpar','rlieu','rnt'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+  document.getElementById('rdst').value = 'eleve';
+  rSMS();
+  oov('ovR');
+}
+
+function svR() {
+  const e = db.eleves.find(el=>el.id===rdvId); if(!e) return;
+  const obj = document.getElementById('robj').value.trim();
+  if (!obj) { toast('⚠️','Objet requis'); return; }
+  (e.rdvs=e.rdvs||[]).push({id:Date.now(),obj,d:document.getElementById('rdt').value,hr:document.getElementById('rhr').value,par:document.getElementById('rpar').value.trim(),lieu:document.getElementById('rlieu').value.trim(),nt:document.getElementById('rnt').value.trim(),st:'upcoming',dst:document.getElementById('rdst').value});
+  (e.actions=e.actions||[]).push({id:Date.now()+1,t:'rdv',d:document.getElementById('rdt').value||T0(),n:obj,imp:0});
+  sv(); cov('ovR'); snav(V);
+  if (V==='fiche') rFiche(rdvId);
+  scheduleAllNotifs();
+  toast('📅','RDV planifié');
+}
+
+// ═══════════════════════════════
+//  PDF
+// ═══════════════════════════════
+function oPdf(id) { 
+  const e = db.eleves.find(el=>el.id===id); if(!e) return;
+  const [bg,fg]=pal(e.id); const c=sc(e.score); const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const acts=[...(e.actions||[])].sort((a,b)=>a.d>b.d?1:-1);
+  const nb=t=>(e.actions||[]).filter(a=>a.t===t).length;
+  const tr=str(e.sh); const trs=tr.d>0?`↑ +${tr.d}`:tr.d<0?`↓ ${tr.d}`:'→ stable';
+  document.getElementById('pdfc').innerHTML=`
+    <div class="ph-band"><div><div style="font-size:8pt;opacity:.55;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Établissement · 2nd degré</div><div class="ph-tit">Fiche de Suivi Individuel — Décrochage</div><div class="ph-sub">Établi le ${today} · Usage interne</div></div><div class="ph-conf">⚠️ Confidentiel</div></div>
+    <div style="display:flex;gap:13px;background:#f8f7f4;border-radius:8px;padding:12px 14px;margin-bottom:16px">
+      <div style="width:42px;height:42px;border-radius:9px;background:${bg};color:${fg};display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:800;flex-shrink:0">${ini(e.prenom,e.nom)}</div>
+      <div style="flex:1"><div style="font-size:13pt;font-weight:800;margin-bottom:5px">${e.prenom} ${e.nom}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;font-size:8.5pt">${[['Classe',e.classe],['Naissance',e.ddn||'—'],['Contact',e.contact||'—'],['Référent',e.referent],['Rôle',e.role],['Depuis',e.date||'—'],['Fin suivi',e.fin||'—']].map(([l,v])=>`<div><div style="font-size:7pt;color:#888;text-transform:uppercase;letter-spacing:.4px">${l}</div><div style="font-weight:600">${v}</div></div>`).join('')}</div></div>
+      <div style="text-align:center;background:white;border:2px solid #e0ddd6;border-radius:7px;padding:9px 12px;min-width:80px;flex-shrink:0"><div style="font-size:24pt;font-weight:800;color:${c};line-height:1">${e.score}</div><div style="font-size:7pt;color:#888;text-transform:uppercase">Score</div><div style="font-size:8pt;font-weight:700;color:${c};margin-top:2px">${sl(e.score).l}</div><div style="font-size:7pt;color:#888;margin-top:1px">${trs}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">${[['Absences',nb('absence'),'#dc2626'],['Retards',nb('retard'),'#ea580c'],['Exclusions',nb('exclusion'),'#ca8a04'],['RDV',(e.rdvs||[]).length,'#1d4ed8'],['Actions',acts.length,'#0f172a'],['Score',e.score+'/100',c]].map(([l,v,col])=>`<div style="background:#f8f7f4;border-radius:5px;padding:7px;text-align:center"><div style="font-size:13pt;font-weight:800;color:${col}">${v}</div><div style="font-size:7pt;text-transform:uppercase;color:#888">${l}</div></div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px"><div><div style="font-size:8pt;font-weight:700;text-transform:uppercase;color:#0f172a;border-bottom:2px solid #0f172a;padding-bottom:3px;margin-bottom:8px">Facteurs de risque</div><div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:5px;padding:8px 10px;font-size:9pt">${e.facteurs||'Non renseignés'}</div></div><div><div style="font-size:8pt;font-weight:700;text-transform:uppercase;color:#0f172a;border-bottom:2px solid #0f172a;padding-bottom:3px;margin-bottom:8px">Contexte</div><div style="background:#f8f7f4;border:1px solid #e0ddd6;border-radius:5px;padding:8px 10px;font-size:9pt;line-height:1.65">${e.note||'Aucune note'}</div></div></div>
+    <div style="font-size:8pt;font-weight:700;text-transform:uppercase;color:#0f172a;border-bottom:2px solid #0f172a;padding-bottom:3px;margin-bottom:10px">Journal des actions</div>
+    ${acts.length===0?'<p style="color:#888;font-size:9pt;font-style:italic">Aucune action.</p>':`<div style="border-left:2px solid #0f172a;padding-left:12px">${acts.map(a=>`<div style="position:relative;padding-bottom:9px"><div style="position:absolute;left:-16px;top:4px;width:8px;height:8px;border-radius:50%;background:${ADC[a.t]||'#888'};border:2px solid white"></div><div style="font-size:8pt;color:#888">${a.d}</div><div style="font-size:9.5pt;font-weight:700">${(AL[a.t]||a.t).replace(/[📞✉️📅📋🤝🏢🧠⚠️📝🔴⏰💬]/g,'').trim()}</div>${a.n?`<div style="font-size:9pt;color:#444">${a.n}</div>`:''}</div>`).join('')}</div>`}
+    <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8pt;color:#aaa"><div>VigiSuivi · ${today}</div><div style="border-top:1px solid #aaa;width:140px;padding-top:3px;text-align:center">Signature</div></div>
+  `;
+  document.getElementById('pdfov').classList.add('on');
+  document.getElementById('pdfov').scrollTop=0;
+  document.getElementById('pdfbar-title').textContent = `📄 ${e.prenom} ${e.nom} — Fiche de suivi`;
+}
+function closePdf() { document.getElementById('pdfov').classList.remove('on'); }
+function printDoc() { const c=document.getElementById('pdfc').innerHTML; document.getElementById('pprintarea').innerHTML=`<div class="pdoc">${c}</div>`; window.print(); setTimeout(()=>{document.getElementById('pprintarea').innerHTML=''},1200); }
+
+// Télécharger PDF via impression navigateur (100% offline)
+function exportPdf() {
+  const content = document.getElementById('pdfc').innerHTML;
+  const w = window.open('','_blank','width=900,height=700');
+  if (!w) { printDoc(); return; }
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>VigiSuivi — Fiche</title>
+  <style>
+    body{font-family:-apple-system,'Segoe UI',sans-serif;font-size:10.5pt;color:#111;margin:0;padding:0}
+    @page{margin:10mm;size:A4}
+    @media print{body{padding:0}}
+    .ph-band{background:#0f172a;color:white;padding:20px 40px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px}
+    .ph-tit{font-size:14pt;font-weight:800;margin-bottom:2px}
+    .ph-sub{font-size:8.5pt;opacity:.55}
+    .ph-conf{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:4px 10px;font-size:7.5pt;font-weight:700;text-transform:uppercase}
+    .pdoc{padding:0 40px 40px}
+  </style></head><body>
+  <div class="pdoc">${content}</div>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),1500)}<\/script>
+  </body></html>`);
+  w.document.close();
+  toast('📄', 'Fenêtre d\'impression ouverte — choisissez "Enregistrer en PDF"');
+}
+
+// Ouvrir dans Adobe : télécharge un fichier HTML imprimable
+function openInAdobe() {
+  const content = document.getElementById('pdfc').innerHTML;
+  const titleEl = document.getElementById('pdfbar-title');
+  const name = (titleEl?.textContent||'VigiSuivi-fiche').replace(/[📄\s]/g,'').replace(/[^a-zA-ZÀ-ÿ0-9\-_]/g,'-').slice(0,40);
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name}</title>
+  <style>
+    body{font-family:-apple-system,'Segoe UI',sans-serif;font-size:10.5pt;color:#111;padding:20px 40px}
+    @page{margin:10mm;size:A4}
+    .ph-band{background:#0f172a;color:white;padding:16px 20px;margin:-20px -40px 20px;display:flex;align-items:flex-start;justify-content:space-between}
+    .ph-tit{font-size:13pt;font-weight:800}
+    .ph-sub{font-size:8pt;opacity:.55}
+    .ph-conf{border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:4px 8px;font-size:7pt;font-weight:700;text-transform:uppercase}
+  </style></head><body>${content}</body></html>`;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name + '.html';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast('📥', 'Fichier téléchargé — ouvrez-le avec Adobe ou Chrome');
+}
+
+// ═══════════════════════════════
+//  IA MODULE
+// ═══════════════════════════════
+let iaData = [null, null];
+
+function oIA() {
+  const opts = db.eleves.map(e=>`<option value="${e.id}">${e.prenom} ${e.nom} — ${e.classe}</option>`).join('');
+  const base = '<option value="">— Créer une nouvelle fiche —</option>';
+  document.getElementById('ielv').innerHTML = base + opts;
+  document.getElementById('idctelv').innerHTML = base + opts;
+  oov('ovIA');
+}
+
+function iTab(btn, i) {
+  document.querySelectorAll('.ia-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  [0,1,2,3].forEach(j => { const el=document.getElementById('iat'+j); if(el) el.style.display=j===i?'block':'none'; });
+}
+
+// ── MODE SWITCHER ──
+function iMode(mode) {
+  document.getElementById('izone-file').style.display = mode==='file' ? 'block' : 'none';
+  document.getElementById('izone-link').style.display = mode==='link' ? 'block' : 'none';
+  document.getElementById('imode-file').className = mode==='file' ? 'btn btn-p btn-sm' : 'btn btn-g btn-sm';
+  document.getElementById('imode-link').className = mode==='link' ? 'btn btn-p btn-sm' : 'btn btn-g btn-sm';
+  document.getElementById('ires0').classList.remove('on');
+  iaData[0] = null;
+}
+
+// ── MULTI-FILE SYSTEM ──
+let selectedFiles = [];
+
+function hdlFile(inp) {
+  const newFiles = Array.from(inp.files);
+  if (!newFiles.length) return;
+  newFiles.forEach(f => {
+    if (!selectedFiles.find(x => x.name===f.name && x.size===f.size)) selectedFiles.push(f);
+  });
+  inp.value = '';
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('ipreview-grid');
+  const cnt = document.getElementById('ipreview-count');
+  const prev = document.getElementById('ipreview');
+  const drop = document.getElementById('idrop');
+  if (!selectedFiles.length) { prev.style.display='none'; drop.style.display='block'; return; }
+  prev.style.display='block'; drop.style.display='none';
+  cnt.textContent = `${selectedFiles.length} fichier${selectedFiles.length>1?'s':''} sélectionné${selectedFiles.length>1?'s':''}`;
+  grid.innerHTML = selectedFiles.map((f,i) => {
+    const isImg = f.type.startsWith('image/');
+    const size = f.size>1024*1024 ? (f.size/1024/1024).toFixed(1)+' Mo' : Math.round(f.size/1024)+' Ko';
+    const short = f.name.length>14 ? f.name.slice(0,11)+'…' : f.name;
+    return `<div style="position:relative;border:1.5px solid var(--bdr);border-radius:9px;overflow:hidden;background:var(--sur2)">
+      ${isImg ? `<img id="fimg-${i}" style="width:100%;height:68px;object-fit:cover;display:block" src="">` : `<div style="height:68px;display:flex;align-items:center;justify-content:center;font-size:26px">${f.name.endsWith('.pdf')||f.type.includes('pdf')?'📄':'📎'}</div>`}
+      <div style="padding:3px 6px;font-size:10px;font-weight:600;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${short}</div>
+      <div style="padding:0 6px 4px;font-size:9px;color:var(--mu)">${size}</div>
+      <button onclick="rmFile(${i})" style="position:absolute;top:3px;right:3px;width:17px;height:17px;border-radius:50%;background:rgba(0,0,0,.6);color:white;font-size:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`;
+  }).join('');
+  selectedFiles.forEach((f,i) => {
+    if (f.type.startsWith('image/')) {
+      const img = document.getElementById('fimg-'+i);
+      if (img) { const r=new FileReader(); r.onload=e=>img.src=e.target.result; r.readAsDataURL(f); }
+    }
+  });
+}
+
+function rmFile(i) { selectedFiles.splice(i,1); renderPreviews(); }
+function clearFiles() { selectedFiles=[]; renderPreviews(); document.getElementById('ires0').classList.remove('on'); iaData[0]=null; }
+
+// Detect link type and show badge
+function detectLink(url) {
+  const d = document.getElementById('ilink-detect');
+  if (!url || url.length < 10) { d.style.display='none'; return; }
+  let label = '';
+  if (/acrobat\.adobe\.com|adobe\.com/i.test(url)) label = '🔴 Adobe Acrobat détecté';
+  else if (/drive\.google\.com/i.test(url)) label = '🔵 Google Drive détecté';
+  else if (/dropbox\.com/i.test(url)) label = '🟢 Dropbox détecté';
+  else if (/onedrive\.live\.com|sharepoint\.com/i.test(url)) label = '🟠 OneDrive détecté';
+  else if (/docs\.google\.com/i.test(url)) label = '🔵 Google Docs détecté';
+  else if (/notion\.so/i.test(url)) label = '⚫ Notion détecté';
+  else label = '🔗 Lien externe détecté';
+  d.textContent = label;
+  d.style.display = 'block';
+}
+
+// Convert link to a fetchable URL
+function normalizeUrl(url) {
+  // Google Drive: convert share link to direct download
+  const gd = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (gd) return `https://drive.google.com/uc?export=download&id=${gd[1]}`;
+  // Google Docs: export as text
+  const gdoc = url.match(/docs\.google\.com\/document\/d\/([^/]+)/);
+  if (gdoc) return `https://docs.google.com/document/d/${gdoc[1]}/export?format=txt`;
+  // Dropbox: force direct download
+  if (/dropbox\.com/i.test(url)) return url.replace('www.dropbox.com','dl.dropboxusercontent.com').replace('?dl=0','?dl=1');
+  // OneDrive: use download link
+  if (/onedrive\.live\.com/i.test(url)) return url.replace('redir','download');
+  // Adobe: can't fetch directly — use URL as context for AI
+  return url;
+}
+
+async function runImport() {
+  const isLink = document.getElementById('izone-link').style.display !== 'none';
+  setLD(0, true);
+  document.getElementById('ires0').classList.remove('on');
+
+  try {
+    if (isLink) {
+      // ── LINK MODE ──
+      const rawUrl = document.getElementById('ilink').value.trim();
+      if (!rawUrl) { toast('⚠️','Collez un lien d\'abord'); setLD(0,false); return; }
+      document.getElementById('ild0-msg').textContent = 'Lecture du lien…';
+
+      const isAdobe = /acrobat\.adobe\.com|adobe\.com/i.test(rawUrl);
+      const isGDrive = /drive\.google\.com/i.test(rawUrl);
+      const isDropbox = /dropbox\.com/i.test(rawUrl);
+      const isOneDrive = /onedrive/i.test(rawUrl);
+
+      let content, res;
+
+      if (isAdobe) {
+        // Adobe Acrobat : accès direct impossible (authentification requise)
+        // On informe l'utilisateur avec les alternatives
+        setLD(0, false);
+        document.getElementById('ires0rows').innerHTML = `
+          <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:9px;padding:13px;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:#c2410c;margin-bottom:6px">⚠️ Adobe Acrobat — Accès direct impossible</div>
+            <div style="font-size:12px;color:#92400e;line-height:1.65">Adobe protège ses documents par authentification. L'application ne peut pas les lire directement via un lien.</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:8px">3 alternatives qui fonctionnent :</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:var(--acl);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6">
+              <div style="font-weight:700;margin-bottom:2px">📥 1. Télécharger puis importer</div>
+              <div style="color:var(--mu)">Ouvrez le PDF dans Adobe → Télécharger → revenez ici en mode <strong>📁 Fichier</strong></div>
+            </div>
+            <div style="background:var(--acl);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6">
+              <div style="font-weight:700;margin-bottom:2px">📸 2. Photographier le document</div>
+              <div style="color:var(--mu)">Mode <strong>📁 Fichier</strong> → zone dépôt → choisir "Appareil photo"</div>
+            </div>
+            <div style="background:var(--acl);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6">
+              <div style="font-weight:700;margin-bottom:2px">✍️ 3. Copier-coller le texte</div>
+              <div style="color:var(--mu)">Sélectionnez le texte dans Adobe → Copier → onglet <strong>✍️ Dicter</strong> → Coller</div>
+            </div>
+          </div>`;
+        document.getElementById('ires0').classList.add('on');
+        // Hide the apply button since there's no data
+        document.querySelector('#ires0 .btn-p').style.display = 'none';
+        return;
+      } else {
+        // Tentative de fetch du contenu
+        document.getElementById('ild0-msg').textContent = 'Récupération du document…';
+        const fetchUrl = normalizeUrl(rawUrl);
+        let docText = '';
+        try {
+          const resp = await fetch(fetchUrl, { mode: 'cors' });
+          if (resp.ok) {
+            const ct = resp.headers.get('content-type')||'';
+            if (ct.includes('text') || ct.includes('json')) {
+              docText = await resp.text();
+              docText = docText.slice(0, 8000); // limit
+            } else if (ct.includes('pdf') || ct.includes('octet')) {
+              // Binary — convert to base64
+              const blob = await resp.blob();
+              const b64 = await new Promise(r => { const fr=new FileReader(); fr.onload=()=>r(fr.result.split(',')[1]); fr.readAsDataURL(blob); });
+              document.getElementById('ild0-msg').textContent = 'Analyse IA en cours…';
+              res = await callAI([{role:'user', content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:PIMP}]}]);
+            }
+          }
+        } catch(fetchErr) {
+          // CORS blocked — show helpful message then try AI with URL only
+          docText = `URL du document : ${rawUrl}\n\nNote : Le contenu n'est pas accessible directement (protection du serveur). Analyse l'URL pour extraire ce que tu peux.`;
+        }
+        if (!res) {
+          document.getElementById('ild0-msg').textContent = 'Analyse IA en cours…';
+          res = await callAI([{role:'user', content: `${PIMP_LINK}\n\nURL du document : ${rawUrl}\n\nContenu récupéré :\n${docText||'(non disponible — analyser depuis l\'URL)'}`}]);
+        }
+      }
+      iaData[0] = parseJ(res);
+      showRes(0, iaData[0]);
+
+    } else {
+      // ── MULTI-FILE MODE — UNE SEULE FICHE ──
+      if (!selectedFiles.length) { toast('⚠️','Sélectionnez au moins un fichier'); setLD(0,false); return; }
+
+      let data;
+
+      if (selectedFiles.length === 1) {
+        // Fichier unique
+        document.getElementById('ild0-msg').textContent = 'Analyse en cours…';
+        const f = selectedFiles[0];
+        const b64 = await f2b64(f);
+        const isImg = f.type.startsWith('image/');
+        const mediaType = isImg ? f.type : 'application/pdf';
+        const content = isImg
+          ? [{type:'image', source:{type:'base64', media_type:mediaType, data:b64}}, {type:'text', text:PIMP}]
+          : [{type:'document', source:{type:'base64', media_type:mediaType, data:b64}}, {type:'text', text:PIMP}];
+        const res = await callAI([{role:'user', content}], 1200);
+        data = parseJ(res);
+
+      } else {
+        // Plusieurs fichiers — TOUT envoyer en une seule requête IA
+        document.getElementById('ild0-msg').textContent = `Chargement de ${selectedFiles.length} fichiers…`;
+        const contentParts = [];
+        for (let i=0; i<selectedFiles.length; i++) {
+          document.getElementById('ild0-msg').textContent = `Fichier ${i+1}/${selectedFiles.length}…`;
+          const f = selectedFiles[i];
+          const b64 = await f2b64(f);
+          const isImg = f.type.startsWith('image/');
+          const mediaType = isImg ? (f.type||'image/jpeg') : 'application/pdf';
+          contentParts.push(
+            isImg
+              ? {type:'image', source:{type:'base64', media_type:mediaType, data:b64}}
+              : {type:'document', source:{type:'base64', media_type:mediaType, data:b64}}
+          );
+        }
+        // Ajouter le prompt une seule fois à la fin
+        contentParts.push({type:'text', text:`${PIMP}\n\nNote : Ces ${selectedFiles.length} images/documents concernent le MÊME élève. Combine toutes les informations visibles pour créer UNE SEULE fiche complète.`});
+        document.getElementById('ild0-msg').textContent = 'Analyse IA en cours…';
+        const res = await callAI([{role:'user', content:contentParts}], 1400);
+        data = parseJ(res);
+      }
+
+      iaData[0] = data;
+      // Création automatique directe
+      document.getElementById('ild0-msg').textContent = 'Création de la fiche…';
+      autoApplyIA(0);
+      return;
+    }
+  } catch(err) {
+    toast('❌', err.message||'Erreur d\'analyse');
+    console.error(err);
+  }
+  setLD(0, false);
+  document.getElementById('ild0-msg').textContent = 'Analyse en cours…';
+}
+
+async function runDictate() {
+  const txt = document.getElementById('idct').value.trim();
+  if (!txt) { toast('⚠️','Saisissez une description'); return; }
+  setLD(1,true);
+  document.getElementById('ires1').classList.remove('on');
+  try {
+    const res = await callAI([{role:'user',content:PDCT+'\n\n---\n'+txt}]);
+    iaData[1] = parseJ(res);
+    showRes(1, iaData[1]);
+  } catch(err) { toast('❌', err.message||'Erreur'); console.error(err); }
+  setLD(1,false);
+}
+
+async function runCorrect() {
+  const txt = document.getElementById('ictxt').value.trim();
+  if (!txt) { toast('⚠️','Saisissez un texte'); return; }
+  const lvl = document.getElementById('iclvl').value;
+  const lvlM = {ortho:'Corrige uniquement les fautes d\'orthographe et de grammaire. Conserve le style.',style:'Corrige les fautes et améliore le style pour un document professionnel scolaire.',rewrite:'Réécris complètement avec un ton institutionnel adapté à l\'éducation nationale.'};
+  setLD(2,true);
+  document.getElementById('ires2').classList.remove('on');
+  try {
+    const res = await callAI([{role:'user',content:`Tu es expert en communication scolaire. ${lvlM[lvl]}\n\nTexte :\n${txt}\n\nRéponds UNIQUEMENT avec le texte corrigé, sans introduction.`}], 1500);
+    document.getElementById('ires2out').textContent = res;
+    document.getElementById('ires2').classList.add('on');
+  } catch(err) { toast('❌', err.message||'Erreur'); }
+  setLD(2,false);
+}
+
+// ✅ CRÉATION AUTOMATIQUE — données placées directement dans les bons champs
+function autoApplyIA(tab) {
+  const data = iaData[tab];
+  setLD(tab, false);
+  if (!data) { toast('❌','Aucune donnée extraite'); return; }
+
+  const selId = document.getElementById(tab===0?'ielv':'idctelv')?.value;
+  const today = T0();
+  const sc0 = Math.min(100, Math.max(0, parseInt(data.score_estime)||35));
+  const clean = v => (!v || v==='—' || v==='null' || v==='' ) ? '' : v;
+  let targetId;
+
+  if (selId) {
+    // Compléter un élève existant — on ne remplace que les champs vides
+    const e = db.eleves.find(el=>el.id==selId);
+    if (e) {
+      if (clean(data.prenom)) e.prenom = data.prenom;
+      if (clean(data.nom)) e.nom = data.nom;
+      if (clean(data.classe)) e.classe = data.classe;
+      if (clean(data.ddn) && !e.ddn) e.ddn = data.ddn;
+      if (clean(data.contact) && !e.contact) e.contact = data.contact;
+      if (clean(data.referent) && !e.referent) e.referent = data.referent;
+      if (clean(data.role) && e.role==='CPE') e.role = data.role;
+      if (clean(data.facteurs)) e.facteurs = [e.facteurs, data.facteurs].filter(Boolean).join(', ');
+      if (clean(data.contexte)) e.note = (e.note ? e.note+'\n\n[IA] ' : '[IA] ') + data.contexte;
+      if (clean(data.stage_lieu)) (e.actions=e.actions||[]).push({id:Date.now(),t:'stage',d:today,n:`[IA] ${data.stage_lieu}${clean(data.stage_dates)?' · '+data.stage_dates:''}`,imp:0});
+      targetId = e.id;
+      sv(); rDrw(); snav(V);
+      toast('✅', `✔ ${e.prenom} ${e.nom} — fiche complétée`);
+    }
+  } else {
+    // Créer une nouvelle fiche avec toutes les données
+    const nid = db.nid++;
+    db.eleves.push({
+      id: nid,
+      prenom: clean(data.prenom) || '—',
+      nom:    clean(data.nom)    || '—',
+      classe: clean(data.classe) || '—',
+      ddn:    clean(data.ddn)    || '',
+      referent: clean(data.referent) || '',
+      role:   clean(data.role)   || 'CPE',
+      contact: clean(data.contact) || '',
+      date: today, fin: '',
+      facteurs: clean(data.facteurs) || '',
+      note: clean(data.contexte) || '',
+      score: sc0,
+      sh: [{d:today, v:sc0, n:'Créé par IA'}],
+      actions: clean(data.stage_lieu)
+        ? [{id:Date.now(),t:'stage',d:today,n:`${data.stage_lieu}${clean(data.stage_dates)?' · '+data.stage_dates:''}`,imp:0}]
+        : [],
+      rdvs: []
+    });
+    targetId = nid;
+    sv(); rDrw(); snav(V);
+    const nm = [clean(data.prenom), clean(data.nom)].filter(Boolean).join(' ') || 'Nouvel élève';
+    toast('🤖', `✔ Fiche créée — ${nm}`);
+  }
+
+  // Fermer IA + ouvrir directement la fiche créée
+  cov('ovIA');
+  selectedFiles = []; renderPreviews();
+  iaData[tab] = null;
+  oF(targetId);
+}
+
+// Alias pour le bouton "Créer / Compléter" visible dans l'onglet Dicter/Lien
+function applyIA(tab) { autoApplyIA(tab); }
+
+function cpIA() { const txt=document.getElementById('ires2out').textContent; navigator.clipboard?.writeText(txt).catch(()=>{}); toast('📋','Texte copié !'); }
+function rstIA(i) {
+  document.getElementById('ires'+i).classList.remove('on');
+  iaData[i]=null;
+  if (i===0) {
+    selectedFiles=[];
+    renderPreviews();
+    const lk=document.getElementById('ilink'); if(lk) lk.value='';
+    const ld=document.getElementById('ilink-detect'); if(ld) ld.style.display='none';
+  } else if (i===1) {
+    document.getElementById('idct').value='';
+  } else {
+    document.getElementById('ictxt').value='';
+  }
+}
+function setLD(i,on) { document.getElementById('ild'+i).classList.toggle('on',on); }
+
+function showRes(tab, data) {
+  // Restore apply button visibility
+  const applyBtn = document.querySelector(`#ires${tab} .btn-p`);
+  if (applyBtn) applyBtn.style.display = '';
+  const fields = [['Prénom',data.prenom],['Nom',data.nom],['Classe',data.classe],['Naissance',data.ddn],['Contact',data.contact],['Référent',data.referent],['Facteurs',data.facteurs],['Stage — lieu',data.stage_lieu],['Stage — dates',data.stage_dates],['Score estimé',data.score_estime?data.score_estime+'/100':null],['Contexte',data.contexte]].filter(([,v])=>v&&v!=='—'&&v!=='null');
+  document.getElementById('ires'+tab+'rows').innerHTML = fields.map(([l,v])=>`<div class="ia-row"><span>${l}</span><span>${v}</span></div>`).join('')||`<div style="color:var(--mu);font-size:13px">Aucune donnée extraite.</div>`;
+  document.getElementById('ires'+tab).classList.add('on');
+}
+
+function f2b64(file) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(new Error('Lecture échouée')); r.readAsDataURL(file); }); }
+function parseJ(txt) { try { const m=(txt.replace(/```json|```/g,'').trim()).match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); } catch(e){} return {contexte:txt}; }
+
+// URL du proxy sécurisé — la clé API reste côté serveur
+const PROXY_URL = 'https://vigisui-proxy.vercel.app/api/proxy';
+
+async function callAI(messages, maxTokens=900) {
+  const r = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      messages
+    })
+  });
+  if (!r.ok) { const err=await r.json().catch(()=>({})); throw new Error(err.error?.message||`Erreur serveur ${r.status}`); }
+  const d = await r.json();
+  return d.content.map(b=>b.type==='text'?b.text:'').join('');
+}
+
+const PIMP=`Tu es un assistant CPE expert en décrochage scolaire. Analyse attentivement cette image ou ce document et extrais TOUTES les informations visibles sur un élève.
+
+IMPORTANT : Lis tout le texte visible dans l'image, même s'il est partiel ou peu lisible. Cherche notamment :
+- Nom et prénom (peut être dans un titre, entête, champ "Élève :", "Nom :", etc.)
+- Classe (3ème, 2nde, 1ère, Terminale + lettre ou numéro)
+- Date de naissance
+- Numéro de téléphone ou email de la famille
+- Nom du référent (CPE, professeur principal, etc.)
+- Lieu de stage, entreprise, structure d'accueil
+- Dates de stage
+- Facteurs de risque, difficultés mentionnées
+- Tout contexte pertinent sur la situation de l'élève
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après :
+{"prenom":"","nom":"","classe":"","ddn":"","contact":"","referent":"","role":"","facteurs":"","stage_lieu":"","stage_dates":"","score_estime":"","contexte":""}
+
+Règles :
+- score_estime = nombre entre 0 et 100 (0=aucun risque, 100=décrochage total)
+- contexte = résumé professionnel de 2-3 phrases sur la situation
+- Si une information n'est pas visible dans le document, mets ""
+- Ne mets JAMAIS "—" pour les champs vides, laisse ""
+- Sois précis et exhaustif, ne laisse rien passer`;
+
+const PIMP_LINK=`Tu es un assistant CPE spécialisé dans le suivi du décrochage scolaire. À partir de l'URL et du contenu fournis, extrais toutes les informations pertinentes sur un élève pour créer une fiche de suivi. Réponds UNIQUEMENT avec JSON valide :
+{"prenom":"","nom":"","classe":"","ddn":"","contact":"","referent":"","role":"","facteurs":"","stage_lieu":"","stage_dates":"","score_estime":"","contexte":""}
+score_estime = 0-100 selon les risques identifiés. contexte = synthèse professionnelle 2-3 phrases. Mets "—" si non trouvé.`;
+
+const PDCT=`À partir de cette description, génère une fiche de suivi. Réponds UNIQUEMENT avec JSON valide :
+{"prenom":"","nom":"","classe":"","ddn":"","contact":"","referent":"","role":"","facteurs":"","stage_lieu":"","stage_dates":"","score_estime":"","contexte":""}
+score_estime = 0-100. contexte = synthèse 2-3 phrases. facteurs = liste séparée par virgules.
+Description :`;
+
+// ═══════════════════════════════
+//  TOAST & SWIPE DRAWER
+// ═══════════════════════════════
+function toast(ic,msg) {
+  const t=document.getElementById('tst');
+  document.getElementById('tic').textContent=ic;
+  document.getElementById('tmsg').textContent=msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2800);
+}
+
+// Swipe from left edge to open drawer
+(function(){
+  let sx=0,sy=0,drg=false;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;drg=sx<50;},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!drg)return;const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+8){drg=false;return;}if(dx>10){rDrw();const drw=document.getElementById('drw'),ov=document.getElementById('drwov');drw.style.transition='none';const p=Math.min(dx/250,1);drw.style.transform=`translateX(${(-1+p)*100}%)`;ov.style.opacity=String(p*.55);ov.style.pointerEvents='none';document.body.style.overflow='hidden';}},{passive:true});
+  document.addEventListener('touchend',e=>{if(!drg)return;drg=false;const dx=e.changedTouches[0].clientX-sx,drwEl=document.getElementById('drw'),ovEl=document.getElementById('drwov');drwEl.style.transition='transform .26s cubic-bezier(.4,0,.2,1)';ovEl.style.transition='opacity .22s';ovEl.style.pointerEvents='';if(dx>70){drwEl.style.transform='translateX(0)';ovEl.style.opacity='.55';ovEl.style.pointerEvents='all';ovEl.classList.add('on');document.getElementById('drw').classList.add('on');}else{drwEl.style.transform='translateX(-100%)';ovEl.style.opacity='0';document.body.style.overflow='';}},{passive:true});
+})();
+
+// ═══════════════════════════════
+//  FADEUP ANIMATION
+// ═══════════════════════════════
+const s=document.createElement('style');
+s.textContent='@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}';
+document.head.appendChild(s);
+
+// ═══════════════════════════════
+//  🔔 SYSTÈME DE NOTIFICATIONS
+// ═══════════════════════════════
+const NOTIF_KEY = 'vigisui_notif';
+
+function getNotifSettings() {
+  try { return JSON.parse(localStorage.getItem(NOTIF_KEY)) || {enabled:false,j1:true,j0:true,scheduled:[]}; }
+  catch(e) { return {enabled:false,j1:true,j0:true,scheduled:[]}; }
+}
+function saveNotifSettings() {
+  const s = getNotifSettings();
+  s.j1 = document.getElementById('notif-j1')?.checked ?? true;
+  s.j0 = document.getElementById('notif-j0')?.checked ?? true;
+  localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+  scheduleAllNotifs();
+}
+
+// ── Ouvrir modal notifs ──
+function oNotif() {
+  const s = getNotifSettings();
+  // Mise à jour toggle
+  const tog = document.getElementById('notif-toggle');
+  if (tog) tog.classList.toggle('on', s.enabled);
+  // Checkboxes
+  const j1 = document.getElementById('notif-j1'); if(j1) j1.checked = s.j1 !== false;
+  const j0 = document.getElementById('notif-j0'); if(j0) j0.checked = s.j0 !== false;
+  // Permission status
+  checkNotifPermission();
+  // Liste RDV à venir
+  renderNotifRdvList();
+  // Dot drawer
+  updateNotifDot();
+  oov('ovNotif');
+}
+
+function checkNotifPermission() {
+  const box = document.getElementById('notif-perm-box');
+  const ico = document.getElementById('notif-perm-ico');
+  const lbl = document.getElementById('notif-perm-lbl');
+  const sub = document.getElementById('notif-perm-sub');
+  const btn = document.getElementById('notif-perm-btn');
+  if (!('Notification' in window)) {
+    box.style.background='#fff7ed'; box.style.borderColor='#fed7aa';
+    ico.textContent='⚠️'; lbl.textContent='Non supporté sur ce navigateur';
+    sub.textContent='Essayez Chrome sur Android ou Safari sur iOS 16.4+';
+    return;
+  }
+  const p = Notification.permission;
+  if (p === 'granted') {
+    box.style.background='var(--acl)'; box.style.borderColor='#a7f3d0';
+    ico.textContent='✅'; lbl.textContent='Notifications autorisées';
+    sub.textContent='Vous recevrez des rappels pour vos RDV';
+    btn.style.display='none';
+  } else if (p === 'denied') {
+    box.style.background='#fef2f2'; box.style.borderColor='#fecaca';
+    ico.textContent='🚫'; lbl.textContent='Notifications bloquées';
+    sub.textContent='Activez-les dans les paramètres du navigateur';
+    btn.style.display='none';
+  } else {
+    box.style.background='#fffbeb'; box.style.borderColor='#fde68a';
+    ico.textContent='🔔'; lbl.textContent='Autorisation requise';
+    sub.textContent='Appuyez sur "Activer" pour recevoir des rappels';
+    btn.style.display='block';
+  }
+}
+
+async function requestNotifPerm() {
+  if (!('Notification' in window)) return;
+  const result = await Notification.requestPermission();
+  checkNotifPermission();
+  if (result === 'granted') {
+    const s = getNotifSettings();
+    s.enabled = true;
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+    document.getElementById('notif-toggle').classList.add('on');
+    scheduleAllNotifs();
+    toast('🔔','Notifications activées !');
+    updateNotifDot();
+  }
+}
+
+function toggleNotifs() {
+  const s = getNotifSettings();
+  if (!s.enabled && Notification.permission !== 'granted') {
+    requestNotifPerm(); return;
+  }
+  s.enabled = !s.enabled;
+  localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+  document.getElementById('notif-toggle').classList.toggle('on', s.enabled);
+  if (s.enabled) scheduleAllNotifs();
+  toast(s.enabled?'🔔':'🔕', s.enabled?'Rappels activés':'Rappels désactivés');
+  updateNotifDot();
+}
+
+function updateNotifDot() {
+  const s = getNotifSettings();
+  const dot = document.getElementById('drw-notif-dot');
+  if (dot) dot.style.background = s.enabled && Notification.permission==='granted' ? '#22c55e' : '#f59e0b';
+}
+
+// ── Planifier toutes les notifications ──
+function scheduleAllNotifs() {
+  const s = getNotifSettings();
+  if (!s.enabled || Notification.permission !== 'granted') return;
+  const today = new Date();
+  const rdvs = db.eleves.flatMap(e =>
+    (e.rdvs||[]).filter(r=>r.st==='upcoming' && r.d >= T0()).map(r=>({...r, eleve:e}))
+  );
+  s.scheduled = [];
+  rdvs.forEach(r => {
+    const [y,m,d] = r.d.split('-').map(Number);
+    const [hh,mm] = (r.hr||'09:00').split(':').map(Number);
+    const rdvDate = new Date(y, m-1, d, hh, mm);
+    // J-1 : 20h00 la veille
+    if (s.j1 !== false) {
+      const j1 = new Date(y, m-1, d-1, 20, 0);
+      if (j1 > today) {
+        s.scheduled.push({rdvId:r.id,eleveId:r.eleve.id,type:'j1',time:j1.toISOString(),obj:r.obj,eleve:`${r.eleve.prenom} ${r.eleve.nom}`,lieu:r.lieu,hr:r.hr});
+      }
+    }
+    // J0 : 08h00 le matin
+    if (s.j0 !== false) {
+      const j0 = new Date(y, m-1, d, 8, 0);
+      if (j0 > today) {
+        s.scheduled.push({rdvId:r.id,eleveId:r.eleve.id,type:'j0',time:j0.toISOString(),obj:r.obj,eleve:`${r.eleve.prenom} ${r.eleve.nom}`,lieu:r.lieu,hr:r.hr});
+      }
+    }
+  });
+  localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+  renderNotifRdvList();
+}
+
+// ── Vérifier et déclencher les notifications en attente ──
+function checkPendingNotifs() {
+  const s = getNotifSettings();
+  if (!s.enabled || Notification.permission !== 'granted') return;
+  if (!s.scheduled || !s.scheduled.length) return;
+  const now = new Date();
+  const toFire = s.scheduled.filter(n => new Date(n.time) <= now);
+  const remaining = s.scheduled.filter(n => new Date(n.time) > now);
+  toFire.forEach(n => fireNotif(n));
+  if (toFire.length) {
+    s.scheduled = remaining;
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(s));
+  }
+}
+
+function fireNotif(n) {
+  const typeLabel = n.type==='j1' ? 'Rappel J-1 — demain' : 'Rappel — aujourd\'hui';
+  const body = `${n.eleve}\n${n.obj}${n.hr?' à '+n.hr:''}${n.lieu?' · '+n.lieu:''}`;
+  try {
+    const notif = new Notification(`📅 ${typeLabel}`, {
+      body,
+      icon: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 52 52\'%3E%3Crect width=\'52\' height=\'52\' rx=\'13\' fill=\'%230d7c66\'/%3E%3Ccircle cx=\'14\' cy=\'42\' r=\'3.5\' fill=\'rgba(255,255,255,.35)\'/%3E%3Ccircle cx=\'26\' cy=\'32\' r=\'3.5\' fill=\'rgba(255,255,255,.6)\'/%3E%3Ccircle cx=\'38\' cy=\'20\' r=\'3.5\' fill=\'white\'/%3E%3Cline x1=\'14\' y1=\'42\' x2=\'26\' y2=\'32\' stroke=\'rgba(255,255,255,.45)\' stroke-width=\'2\'/%3E%3Cline x1=\'26\' y1=\'32\' x2=\'38\' y2=\'20\' stroke=\'rgba(255,255,255,.7)\' stroke-width=\'2\'/%3E%3Ccircle cx=\'38\' cy=\'48\' r=\'5\' fill=\'%23f97316\'/%3E%3C/svg%3E',
+      badge: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 52 52\'%3E%3Crect width=\'52\' height=\'52\' rx=\'13\' fill=\'%230d7c66\'/%3E%3C/svg%3E',
+      tag: `vs-rdv-${n.rdvId}-${n.type}`,
+      requireInteraction: true
+    });
+    notif.onclick = () => { window.focus(); if(n.eleveId) oF(n.eleveId); notif.close(); };
+  } catch(e) { console.warn('Notification failed:', e); }
+}
+
+function testNotif() {
+  if (Notification.permission !== 'granted') {
+    toast('⚠️','Autorisez d\'abord les notifications'); return;
+  }
+  fireNotif({
+    rdvId: 0, eleveId: null, type: 'j0',
+    obj: 'Point de situation', hr: '14:30',
+    lieu: 'Bureau CPE', eleve: 'Lucas Moreau (test)'
+  });
+  toast('🔔','Notification test envoyée !');
+}
+
+function renderNotifRdvList() {
+  const s = getNotifSettings();
+  const el = document.getElementById('notif-rdv-list');
+  const cnt = document.getElementById('notif-rdv-count');
+  if (!el) return;
+  const rdvs = db.eleves.flatMap(e =>
+    (e.rdvs||[]).filter(r=>r.st==='upcoming'&&r.d>=T0()).map(r=>({...r,eleve:e}))
+  ).sort((a,b)=>a.d>b.d?1:-1);
+  if(cnt) cnt.textContent = `(${rdvs.length})`;
+  if (!rdvs.length) { el.innerHTML=`<div style="text-align:center;padding:18px;color:var(--mu);font-size:12px">Aucun RDV à venir</div>`; return; }
+  el.innerHTML = rdvs.map(r => {
+    const dd = new Date(r.d);
+    const hasJ1 = s.scheduled?.some(n=>n.rdvId===r.id&&n.type==='j1');
+    const hasJ0 = s.scheduled?.some(n=>n.rdvId===r.id&&n.type==='j0');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--sur2);border-radius:9px;margin-bottom:7px;border:1.5px solid var(--bdr)">
+      <div style="text-align:center;min-width:28px">
+        <div style="font-size:15px;font-weight:800;color:var(--ac);line-height:1">${dd.getDate()}</div>
+        <div style="font-size:9px;text-transform:uppercase;color:var(--mu)">${dd.toLocaleString('fr',{month:'short'})}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:700">${r.obj}</div>
+        <div style="font-size:11px;color:var(--mu)">${r.eleve.prenom} ${r.eleve.nom}${r.hr?' · '+r.hr:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        ${hasJ1?'<span style="font-size:10px;background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:99px;font-weight:600">J-1</span>':''}
+        ${hasJ0?'<span style="font-size:10px;background:var(--acl);color:var(--ac);padding:2px 6px;border-radius:99px;font-weight:600">J</span>':''}
+        ${!hasJ1&&!hasJ0?'<span style="font-size:10px;color:var(--mu2)">—</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Vérification toutes les minutes
+setInterval(checkPendingNotifs, 60 * 1000);
+
+// ═══════════════════════════════
+//  💾 SYSTÈME DE SAUVEGARDE
+// ═══════════════════════════════
+const BAK_KEY = 'vigisui_bak_meta';
+const DRIVE_KEY = 'vigisui_drive';
+
+// ── Chiffrement AES-256 via Web Crypto API ──
+async function cryptoEncrypt(data, password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'},
+    keyMaterial, {name:'AES-GCM', length:256}, false, ['encrypt']
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(data));
+  // Combine salt + iv + encrypted
+  const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+  combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(encrypted), 28);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function cryptoDecrypt(b64data, password) {
+  const combined = new Uint8Array(atob(b64data).split('').map(c=>c.charCodeAt(0)));
+  const salt = combined.slice(0, 16);
+  const iv = combined.slice(16, 28);
+  const data = combined.slice(28);
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'},
+    keyMaterial, {name:'AES-GCM', length:256}, false, ['decrypt']
+  );
+  const decrypted = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, data);
+  return new TextDecoder().decode(decrypted);
+}
+
+// ── Sauvegarde automatique (hook sur sv) ──
+// On remplace sv() par une version qui déclenche aussi l'auto-backup
+function initSvHook() { window._autoBakReady = true; }
+
+let autoBakTimer = null;
+function scheduleAutoBak() {
+  clearTimeout(autoBakTimer);
+  autoBakTimer = setTimeout(() => {
+    const pwd = localStorage.getItem('vigisui_bakpwd');
+    if (pwd) silentBackup(pwd);
+    // Sync Drive si connecté
+    if (localStorage.getItem(DRIVE_KEY)) syncDrive(pwd);
+  }, 3000); // 3s après la dernière modif
+}
+
+async function silentBackup(password) {
+  try {
+    const payload = JSON.stringify({
+      version: 3,
+      date: new Date().toISOString(),
+      eleves: db.eleves.length,
+      data: db
+    });
+    const encrypted = await cryptoEncrypt(payload, password);
+    localStorage.setItem(BAK_KEY, JSON.stringify({
+      date: new Date().toLocaleString('fr-FR'),
+      eleves: db.eleves.length,
+      encrypted
+    }));
+    updateBakUI();
+  } catch(e) { console.warn('Auto-backup failed:', e); }
+}
+
+// ── Ouvrir modal sauvegarde ──
+function oBak() {
+  updateBakUI();
+  // Pré-remplir le mot de passe sauvegardé
+  const savedPwd = localStorage.getItem('vigisui_bakpwd');
+  if (savedPwd) document.getElementById('bakpwd').value = savedPwd;
+  // Drive status
+  const driveConn = localStorage.getItem(DRIVE_KEY);
+  if (driveConn) {
+    document.getElementById('drive-status').textContent = '✅ Connecté — synchronisation active';
+    document.getElementById('drive-status').style.color = '#16a34a';
+    document.getElementById('drive-btn').textContent = '✓ Drive connecté — Déconnecter';
+    document.getElementById('drive-btn').style.background = '#dc2626';
+    document.getElementById('drive-btn').onclick = disconnectDrive;
+  }
+  oov('ovBak');
+}
+
+function updateBakUI() {
+  const meta = (() => { try { return JSON.parse(localStorage.getItem(BAK_KEY)); } catch(e) { return null; } })();
+  document.getElementById('bak-last').textContent = meta?.date || 'Jamais';
+  document.getElementById('bak-count').textContent = meta ? `${meta.eleves} élève${meta.eleves>1?'s':''}` : '—';
+  // Drawer dot
+  const dot = document.getElementById('drw-bak-dot');
+  if (dot) dot.style.background = meta ? '#22c55e' : '#f59e0b';
+}
+
+// ── Export fichier .vsv ──
+async function exportBackup() {
+  const pwd = document.getElementById('bakpwd').value.trim();
+  if (!pwd) { toast('⚠️','Saisissez un mot de passe'); return; }
+  // Sauvegarder le mot de passe localement pour l'auto-backup
+  localStorage.setItem('vigisui_bakpwd', pwd);
+  try {
+    const payload = JSON.stringify({version:3, date:new Date().toISOString(), eleves:db.eleves.length, data:db});
+    const encrypted = await cryptoEncrypt(payload, pwd);
+    const bak = JSON.stringify({vigisui:true, v:3, date:new Date().toISOString(), payload:encrypted});
+    const blob = new Blob([bak], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `VigiSuivi-backup-${d}.vsv`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    // Mettre à jour le meta
+    localStorage.setItem(BAK_KEY, JSON.stringify({date:new Date().toLocaleString('fr-FR'), eleves:db.eleves.length}));
+    updateBakUI();
+    toast('💾','Sauvegarde téléchargée !');
+  } catch(e) { toast('❌','Erreur chiffrement — '+e.message); }
+}
+
+// ── Import / restauration ──
+async function importBackup(inp) {
+  const file = inp.files[0]; if (!file) return;
+  const pwd = document.getElementById('bakpwd').value.trim();
+  if (!pwd) { toast('⚠️','Saisissez le mot de passe de la sauvegarde'); return; }
+  const msgEl = document.getElementById('bak-restore-msg');
+  msgEl.style.display = 'block';
+  msgEl.style.background = '#fffbeb'; msgEl.style.color = '#92400e';
+  msgEl.textContent = '⏳ Déchiffrement en cours…';
+  try {
+    const text = await file.text();
+    const bak = JSON.parse(text);
+    if (!bak.vigisui) throw new Error('Fichier invalide — ce n\'est pas une sauvegarde VigiSuivi');
+    const decrypted = await cryptoDecrypt(bak.payload, pwd);
+    const restored = JSON.parse(decrypted);
+    if (!restored.data || !restored.data.eleves) throw new Error('Structure de données invalide');
+    if (!confirm(`Restaurer ${restored.data.eleves.length} élève(s) depuis la sauvegarde du ${new Date(restored.date).toLocaleString('fr-FR')} ?\n\nATTENTION : les données actuelles seront remplacées.`)) {
+      msgEl.style.display = 'none'; inp.value = ''; return;
+    }
+    db = restored.data;
+    sv(); rDrw(); snav(V);
+    msgEl.style.background = '#f0fdf4'; msgEl.style.color = '#15803d';
+    msgEl.textContent = `✅ Restauré — ${db.eleves.length} élève(s) récupéré(s)`;
+    updateBakUI();
+    toast('✅',`Sauvegarde restaurée — ${db.eleves.length} élève(s)`);
+    setTimeout(()=>{ cov('ovBak'); gv('dash'); }, 1500);
+  } catch(e) {
+    msgEl.style.background = '#fef2f2'; msgEl.style.color = '#b91c1c';
+    msgEl.textContent = '❌ ' + (e.message.includes('decrypt') ? 'Mot de passe incorrect' : e.message);
+  }
+  inp.value = '';
+}
+
+// ── Google Drive (OAuth2 PKCE) ──
+const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_CLIENT_ID = ''; // À remplir après hébergement HTTPS
+
+function connectDrive() {
+  if (!DRIVE_CLIENT_ID) {
+    // Mode simulation offline — sauvegarde dans IndexedDB
+    localStorage.setItem(DRIVE_KEY, 'local-indexeddb');
+    document.getElementById('drive-status').textContent = '✅ Mode local activé (Drive disponible après hébergement HTTPS)';
+    document.getElementById('drive-status').style.color = '#16a34a';
+    document.getElementById('drive-btn').textContent = '✓ Actif — Déconnecter';
+    document.getElementById('drive-btn').style.background = '#dc2626';
+    document.getElementById('drive-btn').onclick = disconnectDrive;
+    toast('☁️','Sync locale activée — Drive disponible après hébergement');
+    return;
+  }
+  // OAuth2 PKCE flow
+  const state = Math.random().toString(36).slice(2);
+  const redirectUri = location.origin + location.pathname;
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${DRIVE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(DRIVE_SCOPES)}&state=${state}&access_type=offline&prompt=consent`;
+  localStorage.setItem('drive_state', state);
+  window.location.href = url;
+}
+
+function disconnectDrive() {
+  localStorage.removeItem(DRIVE_KEY);
+  localStorage.removeItem('drive_token');
+  document.getElementById('drive-status').textContent = 'Non connecté';
+  document.getElementById('drive-status').style.color = 'var(--mu)';
+  document.getElementById('drive-btn').textContent = 'Connecter Google Drive';
+  document.getElementById('drive-btn').style.background = '#1a73e8';
+  document.getElementById('drive-btn').onclick = connectDrive;
+  toast('☁️','Google Drive déconnecté');
+}
+
+async function syncDrive(password) {
+  const token = localStorage.getItem('drive_token');
+  if (!token || !password) return;
+  try {
+    const payload = JSON.stringify({version:3, date:new Date().toISOString(), eleves:db.eleves.length, data:db});
+    const encrypted = await cryptoEncrypt(payload, password);
+    const content = JSON.stringify({vigisui:true, v:3, date:new Date().toISOString(), payload:encrypted});
+    // Upload to Drive appdata folder
+    const meta = {name:'vigisui-backup.vsv', parents:['appDataFolder']};
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    form.append('file', new Blob([content],{type:'application/json'}));
+    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method:'POST', headers:{Authorization:`Bearer ${token}`}, body:form
+    });
+    localStorage.setItem(BAK_KEY, JSON.stringify({date:new Date().toLocaleString('fr-FR'), eleves:db.eleves.length, drive:true}));
+    updateBakUI();
+  } catch(e) { console.warn('Drive sync failed:', e); }
+}
+
+// Initialisation sauvegarde auto si mot de passe déjà configuré
+function initBackup() {
+  initSvHook(); // activer le hook auto-backup sur sv()
+  updateBakUI();
+  const pwd = localStorage.getItem('vigisui_bakpwd');
+  if (pwd) {
+    // Sauvegarde silencieuse toutes les 5 min en arrière-plan
+    setInterval(() => silentBackup(pwd), 5 * 60 * 1000);
+  }
+}
+
+// ═══════════════════════════════
+//  🎙️ NOTE VOCALE
+// ═══════════════════════════════
+let mediaRecorder = null;
+let audioChunks = [];
+let recTimer = null;
+let recSeconds = 0;
+let voiceTranscript = '';
+let voiceEleveId = null;
+let voiceAIResult = null;
+let voiceResultType = '';
+
+// Ouvrir depuis une fiche (élève pré-sélectionné)
+function oVoice(eleveId) {
+  voiceEleveId = eleveId;
+  oIA();
+  // Switcher sur l'onglet vocal
+  setTimeout(() => {
+    const tabs = document.querySelectorAll('.ia-tab');
+    if (tabs[3]) { tabs.forEach(t=>t.classList.remove('on')); tabs[3].classList.add('on'); }
+    [0,1,2,3].forEach(j => { const el=document.getElementById('iat'+j); if(el) el.style.display=j===3?'block':'none'; });
+    // Pré-sélectionner l'élève
+    const sel = document.getElementById('voice-elv');
+    if (sel && eleveId) sel.value = eleveId;
+  }, 50);
+}
+
+// Toggle enregistrement
+async function toggleRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioChunks = [];
+    recSeconds = 0;
+    // Choisir le meilleur format supporté
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+      : MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg'
+      : 'audio/mp4';
+    mediaRecorder = new MediaRecorder(stream, {mimeType});
+    mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = processAudio;
+    mediaRecorder.start(250);
+    // UI
+    const btn = document.getElementById('voice-rec-btn');
+    btn.textContent = '⏹️';
+    btn.classList.add('voice-rec-active');
+    btn.style.animation = 'vpulse 1.2s ease infinite';
+    document.getElementById('voice-status').textContent = '🔴 Enregistrement en cours…';
+    document.getElementById('voice-status').style.color = '#ef4444';
+    document.getElementById('voice-timer').style.display = 'block';
+    document.getElementById('voice-waves').style.display = 'flex';
+    document.getElementById('voice-raw-wrap').style.display = 'none';
+    document.getElementById('voice-actions-wrap').style.display = 'none';
+    document.getElementById('ires3').classList.remove('on');
+    // Timer
+    recTimer = setInterval(() => {
+      recSeconds++;
+      const m = Math.floor(recSeconds/60);
+      const s = (recSeconds%60).toString().padStart(2,'0');
+      const el = document.getElementById('voice-timer');
+      if(el) el.textContent = `${m}:${s}`;
+    }, 1000);
+  } catch(err) {
+    if (err.name === 'NotAllowedError') toast('⚠️','Autorisez le micro dans votre navigateur');
+    else if (err.name === 'NotFoundError') toast('⚠️','Aucun micro détecté');
+    else toast('❌','Erreur micro: '+err.message);
+  }
+}
+
+function stopRecording() {
+  if (!mediaRecorder) return;
+  mediaRecorder.stop();
+  mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+  clearInterval(recTimer);
+  // UI
+  const btn = document.getElementById('voice-rec-btn');
+  btn.textContent = '🎙️';
+  btn.classList.remove('voice-rec-active');
+  btn.style.animation = '';
+  document.getElementById('voice-status').textContent = '⏳ Traitement de l\'audio…';
+  document.getElementById('voice-status').style.color = 'var(--ac)';
+  document.getElementById('voice-waves').style.display = 'none';
+  document.getElementById('voice-timer').style.display = 'none';
+}
+
+async function processAudio() {
+  const mimeType = mediaRecorder?.mimeType || 'audio/webm';
+  const blob = new Blob(audioChunks, {type: mimeType});
+  // Convertir en base64
+  const b64 = await new Promise(res => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result.split(',')[1]);
+    fr.readAsDataURL(blob);
+  });
+  // Envoyer à l'IA pour transcription
+  setLD(3, true);
+  document.getElementById('ild3-msg').textContent = 'Transcription en cours…';
+  try {
+    const prompt = `Tu es un assistant spécialisé dans le milieu scolaire français.
+Voici un enregistrement audio d'un CPE ou d'un enseignant parlant d'un élève.
+Étape 1 : Transcris fidèlement ce qui est dit.
+Étape 2 : Reformule en une note professionnelle claire, avec une syntaxe institutionnelle de qualité.
+Réponds en JSON : {"transcription":"","note_pro":"","eleve_nom":"","actions_detectees":[{"type":"","description":""}]}
+Types d'actions possibles: absence, tel, courrier, rdv, stage, rased, exclusion, incident, retard, pap, lien`;
+    const res = await callAI([{
+      role:'user',
+      content:[
+        {type:'text', text:prompt},
+        // Note: audio direct non supporté par l'API — on envoie la transcription navigateur si dispo
+        {type:'text', text:`[Audio base64 de ${Math.round(blob.size/1024)}Ko — format ${mimeType}]`}
+      ]
+    }], 1200);
+    // Tentative de parse JSON
+    const data = parseJ(res);
+    voiceTranscript = data.transcription || res;
+    voiceAIResult = data;
+    // Afficher la transcription
+    const rawEl = document.getElementById('voice-raw');
+    if(rawEl) rawEl.textContent = voiceTranscript || '(transcription non disponible)';
+    document.getElementById('voice-raw-wrap').style.display = 'block';
+    document.getElementById('voice-actions-wrap').style.display = 'block';
+    document.getElementById('voice-status').textContent = '✅ Enregistrement traité';
+    document.getElementById('voice-status').style.color = 'var(--ac)';
+    // Si l'IA a déjà généré une note pro, l'afficher
+    if (data.note_pro) showVoiceResult('note', data);
+  } catch(err) {
+    toast('❌','Erreur: '+err.message);
+    document.getElementById('voice-status').textContent = 'Appuyez pour réessayer';
+    document.getElementById('voice-status').style.color = 'var(--mu)';
+  }
+  setLD(3, false);
+}
+
+// Utiliser la transcription navigateur en temps réel si disponible
+function initSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const sr = new SR();
+  sr.lang = 'fr-FR';
+  sr.continuous = true;
+  sr.interimResults = true;
+  sr.onresult = e => {
+    let interim = '', final = '';
+    for(let i=e.resultIndex; i<e.results.length; i++) {
+      if(e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if(final) voiceTranscript += final + ' ';
+    const rawEl = document.getElementById('voice-raw');
+    if(rawEl) {
+      rawEl.textContent = voiceTranscript + interim;
+      rawEl.style.display = 'block';
+    }
+    document.getElementById('voice-raw-wrap').style.display = 'block';
+  };
+  return sr;
+}
+
+let speechRec = null;
+
+// Surcharger startRecording pour utiliser SpeechRecognition si disponible
+const _startRecOrig = startRecording;
+async function startRecording() {
+  voiceTranscript = '';
+  speechRec = initSpeechRecognition();
+  if (speechRec) {
+    try { speechRec.start(); } catch(e) {}
+  }
+  await _startRecOrig();
+}
+
+function stopRecording() {
+  if (speechRec) { try { speechRec.stop(); } catch(e) {} speechRec = null; }
+  if (!mediaRecorder) return;
+  mediaRecorder.stop();
+  mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+  clearInterval(recTimer);
+  const btn = document.getElementById('voice-rec-btn');
+  btn.textContent = '🎙️';
+  btn.classList.remove('voice-rec-active');
+  btn.style.animation = '';
+  document.getElementById('voice-status').textContent = '⏳ Traitement…';
+  document.getElementById('voice-status').style.color = 'var(--ac)';
+  document.getElementById('voice-waves').style.display = 'none';
+  document.getElementById('voice-timer').style.display = 'none';
+}
+
+// Traitement IA sur la transcription
+async function runVoiceAI(mode) {
+  const text = voiceTranscript || document.getElementById('voice-raw')?.textContent;
+  if (!text || text.trim().length < 5) { toast('⚠️','Aucun texte à traiter'); return; }
+  setLD(3, true);
+  voiceResultType = mode;
+  const prompts = {
+    note: `Tu es un CPE expert. Reformule ce texte en note professionnelle institutionnelle de qualité, avec une syntaxe impeccable. Sois précis, concis et professionnel.\n\nTexte brut : "${text}"\n\nRéponds UNIQUEMENT avec la note reformulée, sans introduction.`,
+    fiche: `À partir de ce texte, extrais toutes les infos et génère une fiche élève. Réponds en JSON : {"prenom":"","nom":"","classe":"","ddn":"","contact":"","referent":"","role":"","facteurs":"","score_estime":"","contexte":""}\n\nTexte : "${text}"`,
+    actions: `Analyse ce texte et liste toutes les actions à enregistrer pour un élève suivi pour décrochage. Réponds en JSON : {"note_pro":"","actions":[{"type":"tel|absence|courrier|rdv|stage|rased|exclusion|incident|retard|pap|lien|autre","description":"","impact":0}]}\nL'impact est un nombre entre -15 et +15 selon la gravité.\n\nTexte : "${text}"`
+  };
+  document.getElementById('ild3-msg').textContent = mode==='note'?'Reformulation…':mode==='fiche'?'Génération fiche…':'Détection des actions…';
+  try {
+    const res = await callAI([{role:'user', content:prompts[mode]}], 1200);
+    voiceAIResult = mode==='note' ? {note_pro:res} : parseJ(res);
+    showVoiceResult(mode, voiceAIResult);
+  } catch(err) { toast('❌', err.message); }
+  setLD(3, false);
+}
+
+function showVoiceResult(mode, data) {
+  const cont = document.getElementById('ires3-content');
+  const title = document.getElementById('ires3-title');
+  const actDiv = document.getElementById('ires3-actions');
+  const applyBtn = document.getElementById('ires3-apply');
+  if (mode==='note') {
+    title.textContent = '✅ Note professionnelle';
+    cont.textContent = data.note_pro || '';
+    actDiv.style.display = 'none';
+    applyBtn.textContent = '📝 Ajouter à la fiche';
+  } else if (mode==='fiche') {
+    title.textContent = '✅ Fiche générée';
+    const fields = [['Prénom',data.prenom],['Nom',data.nom],['Classe',data.classe],['Contact',data.contact],['Contexte',data.contexte]].filter(([,v])=>v&&v!=='—');
+    cont.innerHTML = fields.map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bdr);font-size:12px"><span style="color:var(--mu)">${l}</span><span style="font-weight:600">${v}</span></div>`).join('');
+    actDiv.style.display = 'none';
+    applyBtn.textContent = '👤 Créer la fiche';
+  } else if (mode==='actions') {
+    title.textContent = '✅ Actions détectées';
+    cont.textContent = data.note_pro || '';
+    const acts = data.actions || [];
+    if (acts.length) {
+      actDiv.style.display = 'block';
+      actDiv.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin-bottom:7px">⚡ ${acts.length} action(s) à créer</div>`
+        + acts.map((a,i)=>`<div style="background:var(--sur2);border-radius:8px;padding:8px 10px;margin-bottom:6px;border:1.5px solid var(--bdr);display:flex;align-items:center;gap:9px"><span style="font-size:16px">${{tel:'📞',absence:'🔴',courrier:'✉️',rdv:'📅',stage:'🏢',rased:'🧠',exclusion:'⚠️',incident:'📝',retard:'⏰',pap:'📋',lien:'🤝',autre:'💬'}[a.type]||'💬'}</span><div style="flex:1;font-size:12px">${a.description}</div><span style="font-size:11px;font-weight:700;color:${a.impact>0?'var(--re)':a.impact<0?'var(--gr)':'var(--mu)'}">${a.impact>0?'+':''} ${a.impact}</span></div>`).join('');
+    }
+    applyBtn.textContent = '⚡ Créer les actions';
+  }
+  document.getElementById('ires3').classList.add('on');
+}
+
+function applyVoiceResult() {
+  const selId = document.getElementById('voice-elv')?.value || (voiceEleveId ? String(voiceEleveId) : '');
+  const today = T0();
+  if (voiceResultType === 'note') {
+    const note = voiceAIResult?.note_pro || '';
+    if (!note) return;
+    if (selId) {
+      const e = db.eleves.find(el=>el.id==selId);
+      if (e) { e.note = (e.note?e.note+'\n\n[🎙️ '+today+'] ':'[🎙️ '+today+'] ') + note; sv(); toast('📝','Note ajoutée à la fiche'); cov('ovIA'); oF(e.id); return; }
+    }
+    // Copier dans le presse-papier si pas d'élève
+    navigator.clipboard?.writeText(note).catch(()=>{});
+    toast('📋','Note copiée !');
+  } else if (voiceResultType === 'fiche') {
+    const data = voiceAIResult;
+    if (!data) return;
+    iaData[1] = data;
+    autoApplyIA(1);
+  } else if (voiceResultType === 'actions') {
+    const acts = voiceAIResult?.actions || [];
+    if (!acts.length || !selId) { toast('⚠️','Sélectionnez un élève'); return; }
+    const e = db.eleves.find(el=>el.id==selId);
+    if (!e) return;
+    acts.forEach(a => {
+      const imp = parseInt(a.impact)||0;
+      (e.actions=e.actions||[]).push({id:Date.now()+Math.random(),t:a.type||'autre',d:today,n:'[🎙️] '+a.description,imp});
+      const ns = Math.max(0,Math.min(100,e.score+imp));
+      e.score=ns;
+      if(imp!==0)(e.sh=e.sh||[]).push({d:today,v:ns,n:AL[a.type]||a.type});
+    });
+    sv(); cov('ovIA'); oF(e.id);
+    toast('⚡',`${acts.length} action(s) ajoutée(s) à la fiche`);
+  }
+}
+
+function rstVoice() {
+  voiceTranscript=''; voiceAIResult=null; voiceResultType='';
+  document.getElementById('voice-raw-wrap').style.display='none';
+  document.getElementById('voice-actions-wrap').style.display='none';
+  document.getElementById('ires3').classList.remove('on');
+  document.getElementById('voice-status').textContent='Appuyez pour parler';
+  document.getElementById('voice-status').style.color='var(--mu)';
+  document.getElementById('voice-timer').style.display='none';
+  document.getElementById('voice-timer').textContent='0:00';
+}
+
+// Mettre à jour le select vocal quand oIA est appelé
+const _oIAOrig = oIA;
+function oIA() {
+  _oIAOrig();
+  const opts = db.eleves.map(e=>`<option value="${e.id}">${e.prenom} ${e.nom} — ${e.classe}</option>`).join('');
+  const base = '<option value="">— Créer une nouvelle fiche —</option>';
+  const sel = document.getElementById('voice-elv');
+  if(sel) sel.innerHTML = base + opts;
+  if(voiceEleveId) { if(sel) sel.value=voiceEleveId; }
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+try {
+  // Nettoyer les fiches vides créées par erreur (nom et prénom = "—")
+  if (db && db.eleves) {
+    db.eleves = db.eleves.filter(e => !(e.prenom==='—' && e.nom==='—'));
+    sv();
+  }
+  snav('dash');
+  rDrw();
+  rDash();
+  initBackup();
+  // Init notifications
+  updateNotifDot();
+  checkPendingNotifs();
+  scheduleAllNotifs();
+} catch(err) {
+  console.error('Init error:', err);
+  document.getElementById('mc').innerHTML=`<div style="font-family:system-ui;padding:40px 20px;text-align:center;max-width:420px;margin:0 auto"><div style="font-size:42px;margin-bottom:14px">⚠️</div><div style="font-size:18px;font-weight:700;margin-bottom:8px">Erreur au démarrage</div><div style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6">${err.message}</div><button onclick="localStorage.removeItem('${KEY}');location.reload()" style="background:#0d7c66;color:white;border:none;border-radius:9px;padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer">🔄 Réinitialiser</button></div>`;
+}
+
+// ═══════════════════════════════
+//  📲 PWA — SERVICE WORKER
+// ═══════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'SYNC_BACKUP') {
+          const pwd = localStorage.getItem('vigisui_bakpwd');
+          if (pwd) silentBackup(pwd);
+        }
+      });
+    }).catch(err => console.warn('SW:', err));
+  });
+}
+
+// Bouton d'installation automatique
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    const t = document.getElementById('tst');
+    const ic = document.getElementById('tic');
+    const mg = document.getElementById('tmsg');
+    if (!t||!ic||!mg) return;
+    ic.textContent = '📲';
+    mg.innerHTML = 'Installer VigiSuivi &nbsp;<button onclick="installPWA()" style="background:#0d7c66;color:white;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Installer</button>';
+    t.classList.add('on');
+    setTimeout(() => t.classList.remove('on'), 9000);
+  }, 2500);
+});
+
+function installPWA() {
+  if (!deferredPrompt) {
+    toast('📲','Menu Chrome ⋮ → "Ajouter à l\'écran d\'accueil"');
+    return;
+  }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r => {
+    if (r.outcome==='accepted') toast('✅','VigiSuivi installé sur votre téléphone !');
+    deferredPrompt = null;
+  });
+}
+window.addEventListener('appinstalled', () => {
+  toast('✅','VigiSuivi installé !');
+  deferredPrompt = null;
+});
+</script>
+</body>
+</html>
